@@ -1,7 +1,7 @@
 \section{Discussion}
 
 
-\subsection{Data needed and development of the revised model}
+\subsection{Data requirements and further model development}
 
 We need HTF's internal operating constraints: what limits discharge, why the observed maximum is approximately 23~MW rather than 30~MW, and how demand, temperatures, local production and network conditions affect it.
 
@@ -9,7 +9,10 @@ We also need demand forecasts, PTES charging/discharging schedules and actual op
 
 The key question is why HTF operates discharge conservatively: physical limits, safety margins, slower ramps or a preference for fewer adjustments. This determines whether incentives can improve operation and how to represent the behaviour.
 
-\begin{center}
+\begin{table*}[tbp]
+\centering
+\caption{Distinction between physical limits, operating preferences and responsiveness.}
+\label{tab:response_concepts}
 \begin{tabularx}{\textwidth}{
     @{}>{\raggedright\arraybackslash}p{0.28\textwidth}
     >{\raggedright\arraybackslash}X@{}
@@ -27,13 +30,16 @@ Responsiveness
 & Willingness to change operation when incentives change \\
 \bottomrule
 \end{tabularx}
-\end{center}
+\end{table*}
 
 The economic analysis must distinguish current heat-production cost, the forward-looking value of stored heat and the tariff paid by HTF.
 
-The full proces of the soft coupled proposed model would look the following:
+A proposed extension would connect central scheduling, tariff calculation, local response and corrective dispatch as outlined in Table~\ref{tab:future_workflow}.
 
-\begin{center}
+\begin{table*}[tbp]
+\centering
+\caption{Proposed future soft-coupled workflow; this feedback loop is not implemented in the present benchmark.}
+\label{tab:future_workflow}
 \small
 \begin{tabularx}{\textwidth}{
     @{}>{\raggedright\arraybackslash}p{0.21\textwidth}
@@ -64,11 +70,11 @@ The full proces of the soft coupled proposed model would look the following:
 & Best-performing structures under the selected criteria \\
 \bottomrule
 \end{tabularx}
-\end{center}
+\end{table*}
 
 Actual operation feeds back into subsequent scheduling. Physical constraints remain binding; penalties apply to chargeable deviations from the accepted schedule.
 
-\paragraph{Cases to compare}
+\subsubsection{Candidate comparisons}
 \begin{itemize}
     \item Existing arrangements.
     \item Pumping-cost compensation or a constant discharge discount.
@@ -79,266 +85,5 @@ Actual operation feeds back into subsequent scheduling. Physical constraints rem
 
 Evaluate schedule adherence, operating costs and financial outcomes for HTF and VEKS, keeping tariff transfers separate from system savings.
 
-\paragraph{Next step}
+\subsubsection{Next development step}
 Clarify HTF's constraints and operating preferences, obtain the data, and test the response model over a short period before implementing the full coupling and tariff search.
-
-
-what is VEKS paying for the heat 
-
-looks suboptimal to just operate the heat pumps by default 
-
-heres space for further work now 
-
-
-
-% We need information on the internal constraints of the HTF network,
-% particularly the achievable PTES discharge rate and the factors that
-% influence it. What would be required to reach a discharge rate of
-% 30~MW, and why has the maximum observed discharge rate been limited
-% to approximately 23~MW?
-
-% We also need data on:
-% \begin{itemize}
-%     \item Forecast heat demand in the HTF network.
-%     \item The resulting PTES charging and discharging schedules.
-%     \item Actual PTES charging and discharging.
-% \end{itemize}
-
-% A consistent dataset covering one month to one year would be highly
-% valuable for developing and evaluating the model.
-
-% \subsubsection{Distinguishing costs, storage value and tariffs}
-
-% Three different quantities should be distinguished in the system model:
-
-% \begin{center}
-% \begin{tabularx}{\textwidth}{
-%     @{}
-%     >{\raggedright\arraybackslash}p{0.35\textwidth}
-%     >{\raggedright\arraybackslash}X
-%     @{}
-% }
-% \toprule
-% \textbf{Quantity} & \textbf{Meaning} \\
-% \midrule
-% Current marginal heat-production cost
-% & Cost of supplying an additional unit of heat now. \\[0.5em]
-
-% Marginal value of stored heat
-% & Benefit of retaining an additional unit of heat for future use. \\[0.5em]
-
-% HTF discharge tariff
-% & What HTF pays when receiving heat from the PTES. \\
-% \bottomrule
-% \end{tabularx}
-% \end{center}
-
-% The value of stored heat depends on expected future costs, demand,
-% storage availability and operating restrictions. Varmelast's
-% description explicitly links the PTES weekly outlook to this
-% forward-looking valuation.
-
-% \subsubsection{Understanding conservative discharge operation}
-
-% It is essential to establish with HTF why discharge is operated
-% conservatively. This is a prerequisite for further model development.
-% If technical constraints prevent the higher discharge rates required
-% by the proposed approach, the project should not proceed in its
-% current form.
-
-% Different reasons for conservative operation require different
-% representations in the model:
-
-% \begin{center}
-% \begin{tabularx}{\textwidth}{
-%     @{}
-%     >{\raggedright\arraybackslash}X
-%     >{\raggedright\arraybackslash}X
-%     @{}
-% }
-% \toprule
-% \textbf{Reason for conservative operation}
-% & \textbf{Appropriate representation} \\
-% \midrule
-% A discharge rate would violate a network or temperature limit.
-% & Hard physical constraint. \\[0.5em]
-
-% Operators prefer a lower rate because they are uncertain about
-% operating conditions.
-% & Perceived risk or a preferred operating range. \\[0.5em]
-
-% Operators avoid frequent or rapid adjustments.
-% & Adjustment cost, deadband or limited decision frequency. \\[0.5em]
-
-% Operators prefer an established discharge procedure.
-% & A reference operating policy with a cost of departing from it. \\
-% \bottomrule
-% \end{tabularx}
-% \end{center}
-
-% \noindent
-% \textbf{A financial penalty can change a preference. It cannot remove
-% a physical constraint.}
-
-% We should therefore ask HTF what ``conservative'' means operationally:
-% lower discharge rates, slower ramps, earlier shutdown, larger safety
-% margins or fewer interventions. These behaviours imply different
-% model structures.
-
-% Three distinct concepts should be described:
-
-% \begin{center}
-% \begin{tabularx}{\textwidth}{
-%     @{}
-%     >{\raggedright\arraybackslash}p{0.20\textwidth}
-%     >{\raggedright\arraybackslash}X
-%     >{\raggedright\arraybackslash}X
-%     @{}
-% }
-% \toprule
-% \textbf{Concept}
-% & \textbf{Meaning in this case}
-% & \textbf{Mathematical representation} \\
-% \midrule
-% Physical flexibility
-% & Which discharge trajectories HTF can technically implement.
-% & Feasible set defined by demand, temperature, storage and ramp
-% constraints. \\[0.5em]
-
-% Operating preference
-% & Which feasible trajectories HTF prefers.
-% & Operating rule or additional objective terms. \\[0.5em]
-
-% Responsiveness
-% & How much HTF changes its preferred operation when incentives change.
-% & Parameters governing the trade-off between preferences and payments. \\
-% \bottomrule
-% \end{tabularx}
-% \end{center}
-
-% \subsubsection{Initial operational hypothesis}
-
-% An initial operational hypothesis should be developed with HTF.
-% For example, the relevant behaviour might be:
-
-% \begin{quote}
-% We can discharge faster, but normally maintain a lower discharge rate
-% because it gives us a larger operating margin.
-% \end{quote}
-
-% Alternatively, it might be:
-
-% \begin{quote}
-% The discharge level itself is not the problem. We avoid changing it
-% frequently because every adjustment requires intervention.
-% \end{quote}
-
-% The following questions should therefore be clarified:
-% \begin{itemize}
-%     \item What exactly do operators avoid: high discharge rates,
-%     rapid changes, frequent changes or uncertainty?
-%     \item Does this preference depend on demand, temperatures or
-%     network configuration?
-% \end{itemize}
-
-% \subsubsection{Tariff cases and comparison benchmarks}
-
-% A simple compensation tariff should be included as a serious
-% comparator. Moving directly from the monthly tariff to a sophisticated
-% dynamic tariff raises the question of whether the additional complexity
-% is necessary. A simple discharge discount should therefore also be
-% investigated.
-
-% \begin{center}
-% \begin{tabularx}{\textwidth}{
-%     @{}
-%     >{\raggedright\arraybackslash}X
-%     >{\raggedright\arraybackslash}X
-%     @{}
-% }
-% \toprule
-% \textbf{Case} & \textbf{Purpose} \\
-% \midrule
-% Existing arrangements
-% & Establish the baseline. \\[0.5em]
-
-% Pumping-cost compensation or a constant discharge discount
-% & Test whether a simple payment resolves the incentive gap. \\[0.5em]
-
-% Dynamic discharge discount
-% & Identify the additional value of varying the incentive over time. \\[0.5em]
-
-% Dynamic discount plus shortfall charge
-% & Identify the additional effect of liability. \\[0.5em]
-
-% Feasible schedule-following benchmark
-% & Measure the remaining scope for improvement. \\
-% \bottomrule
-% \end{tabularx}
-% \end{center}
-
-% \subsubsection{Proposed soft-coupled modelling process}
-
-% The full process of the proposed soft-coupled model would look
-% as follows:
-
-% \begin{center}
-% \small
-% \begin{tabularx}{\textwidth}{
-%     @{}
-%     >{\raggedright\arraybackslash}p{0.20\textwidth}
-%     >{\raggedright\arraybackslash}X
-%     >{\raggedright\arraybackslash}X
-%     @{}
-% }
-% \toprule
-% \textbf{Step}
-% & \textbf{Model or calculation}
-% & \textbf{Main output} \\
-% \midrule
-% \textbf{1. Central scheduling}
-% & PyPSA optimises represented heat supply and PTES operation using
-% forecasts and HTF's declared capability
-% & Charging/discharging schedule and estimated storage value \\[0.7em]
-
-% \textbf{2. Tariff calculation}
-% & Translate the economic signals into a candidate discharge tariff
-% and deviation charge
-% & Prices and settlement rules announced to HTF \\[0.7em]
-
-% \textbf{3. HTF response}
-% & Behavioural model balances payments, operating preferences and
-% local feasibility
-% & Actual discharge, heat-exchanger supply and any adjustable local
-% production \\[0.7em]
-
-% \textbf{4. System adjustment}
-% & Calculate how actual operation changes upstream supply and
-% storage availability
-% & Corrective operating costs, updated storage state and stakeholder
-% outcomes \\[0.7em]
-
-% \textbf{5. Tariff evaluation}
-% & Repeat for alternative tariff parameters and operating conditions
-% & Best-performing structures under the selected criteria \\
-% \bottomrule
-% \end{tabularx}
-% \end{center}
-
-
-decouple it from the big system and show that is has to be on a smaller side, with \\
-mention constrained and unonstrianed model but it shouldnt be focus of the whole paper \\
-lower heat pump cost in the distribution side, use less chp units on the transmission system \\ show the bigger argument 
-show on the economic impact of the system then 
-
-Energy - 
-
-seperating two problems one for the local systme and the global system 
-marginal heat price send from the bigger system to the small 
-
-incldue the cost of the pump for the PTES. 
-
-
-discount on the extra heat - inlcude pump cost into the system - or ramp cost for the reward - if the dual variables are useful for the constraints or heat exchanger, how to explore this then. price or reward for the pumps to operate 
-
-put discussions in the model and see how it changes. 

@@ -1,66 +1,28 @@
-\documentclass[11pt]{article}
-
+\documentclass[final,5p,times,twocolumn]{elsarticle}
+% Change to [preprint,12pt] for a single-column review manuscript.
 \input{preamble}
-
-%\setcounter{section}{0} % to get '0 Introduction'
-%\setcounter{section}{-1}
 \begin{document}
+\begin{frontmatter}
 \input{Frontpage}
-
-\fontfamily{ptm}\selectfont
-
-%%%%%%%%%%%%%%%%%%  -------------  PREAMBLE AND TABLE OF CONTENTS --------------- %%%%%%%%%%%%%%
-\newpage
-\pagenumbering{roman}
-
-\newpage
-\doublespacing
-%\addcontentsline{toc}{section}{Table of Contents}
-\renewcommand{\baselinestretch}{1}\normalsize
-\tableofcontents
-\renewcommand{\baselinestretch}{1}\normalsize
-%\singlespacing
-\thispagestyle{fancy} % force page style
-
-
-\newpage
-\pagenumbering{arabic} 
-\setlength\parindent{0pt}
-
-%----------------- MAIN SECTIONS -----------------%
-%\input{sections/00_Nomenclature}
-
-\newpage
-
+\input{sections/00_Abstract}
+\begin{keyword}
+Pit thermal energy storage \sep District heating \sep Dynamic heat pricing
+\sep Operational optimization \sep Tariff design
+\end{keyword}
+\end{frontmatter}
+\input{sections/00_Nomenclature}
 \input{sections/01_Introduction}
 \input{sections/02_system_description}
 \input{sections/03_methodology}
-%\input{sections/02_a)}
+\FloatBarrier
 \input{sections/04_results}
 \input{sections/05_discussion}
-\input{sections/06_conclusion}
-
-\label{EndOfText}
-
-\newpage
-\pagenumbering{Roman} 
-%\addcontentsline{toc}{section}{List of Figures}
-
-%%%%%%%%%%%%%%%%%%%%%% ----- References ----- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newpage
-\section*{References}
-
-\printbibliography[heading=none]
-
-%%%%%%%%%%%%%%%%%%%%%% ----- Appendix ----- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newpage
+% The original conclusion and acknowledgements are empty. Activate when written.
+% \input{sections/06_conclusion}
+\FloatBarrier
 \appendix
-\setcounter{table}{0}          % start from A
-\renewcommand{\thetable}{\Alph{table}}
-\renewcommand{\thesection}{\Alph{section}}
-
-\input{Appendix A}
-
-\label{EndOfDoc}  % last page of the whole document
-
+\input{sections/A_heat_pump_performance}
+\FloatBarrier
+\bibliographystyle{elsarticle-num}
+\bibliography{References}
 \end{document}

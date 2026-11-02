@@ -1,141 +1,54 @@
-%%%%%%%%%%%%%%%% ---- PREAMBLE ------- %%%%%%%%%%%%%%%
-
-% ----------- CORE / LAYOUT --------------
+% Page geometry and the two-column article layout are supplied by elsarticle.
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[english]{babel}
-
-% Slightly roomier margins + nicer foot area
-\usepackage[a4paper,margin=1.8cm,footskip=0.5in]{geometry}
-
-% Better typography: micro-kerning + less “clustering”
+\usepackage{amsmath,amssymb,mathtools,bm}
 \usepackage{microtype}
-
-% Font: keep Times-like, but nicer spacing than raw ptm
-\usepackage{newtxtext}
-\usepackage{newtxmath}
-
-% Line spacing (THIS fixes the cramped look)
-\usepackage{setspace}
-\setstretch{1.25} % try 1.2–1.35; 1.25 is a good "beautiful report" default
-
-% Paragraph spacing: avoid cramped blocks (don’t also set \parskip to 0 later!)
-\setlength{\parskip}{6pt}
-\setlength{\parindent}{0pt}
-
-\usepackage{csquotes} % required by biblatex
-
-% ----------- MATH, FIGURES & TABLES --------------
 \usepackage{graphicx}
-\usepackage{float}
-\usepackage{caption}
-\usepackage{subcaption}
-\usepackage{enumerate}
-\usepackage{amsmath, amssymb}
-\usepackage{mathtools}
-\usepackage{array}
-\usepackage{booktabs}
-\usepackage{makecell}
-\usepackage{adjustbox}
-\usepackage{rotating}
-\usepackage{wrapfig}
-\usepackage{lscape}
-\usepackage{circuitikz}
-\usepackage{tikz}
-\usepackage{tabu}
-\usepackage{color,soul}
-\usepackage{algorithm}
-\usepackage{algpseudocode}
-\usepackage{changepage}
-\usepackage{comment}
-\usepackage[normalem]{ulem}
-\usepackage{pdfpages}
-\usepackage{nomencl}
-\makenomenclature
-\usepackage{datetime}
-\usepackage{nameref}
-\usepackage{tocbibind} % Adds References to ToC
-\usepackage{fancyhdr}
-\usepackage{tabularx}
-\usepackage{eurosym}
-\usepackage{multirow}
-\usepackage{subcaption}
-\usepackage{subfiles}
-% Caption styling (keep consistent; you had this twice before)
-\usepackage[font=small,labelfont=bf]{caption}
-\usepackage{tabularx}
-\usepackage[mode=buildnew]{standalone}
-
-% ----------- TODO NOTES --------------
-\usepackage[colorinlistoftodos]{todonotes}
-
-% ----------- CODE LISTINGS --------------
+\usepackage{booktabs,tabularx,array,makecell,multirow}
 \usepackage{xcolor}
-\definecolor{codegreen}{rgb}{0,0.6,0}
-\definecolor{codegray}{rgb}{0.5,0.5,0.5}
-\definecolor{codepurple}{rgb}{0.58,0,0.82}
-\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
-
-\usepackage{listings}
-\lstdefinestyle{mystyle}{
-    backgroundcolor=\color{backcolour},
-    commentstyle=\color{codegreen},
-    keywordstyle=\color{magenta},
-    numberstyle=\tiny\color{codegray},
-    stringstyle=\color{codepurple},
-    basicstyle=\ttfamily\small, % slightly larger than footnotesize
-    breaklines=true,
-    captionpos=b,
-    keepspaces=true,
-    numbers=left,
-    numbersep=6pt,
-    showspaces=false,
-    showstringspaces=false,
-    showtabs=false,
-    extendedchars=true,
-    inputencoding=utf8,
-    literate={æ}{{\ae}}1 {ø}{{\o}}1 {å}{{\aa}}1 {Æ}{{\AE}}1 {Ø}{{\O}}1 {Å}{{\AA}}1,
-    tabsize=4
-}
-\lstset{style=mystyle}
-
-% ----------- BIBLIOGRAPHY (BIBLATEX) --------------
-\usepackage[
-  backend=biber,
-  style=numeric,
-  sorting=none,
-  doi=true,
-  url=true
-]{biblatex}
-\addbibresource{References.bib} % <-- make sure filename matches exactly (case-sensitive)
-
-% ----------- HYPERREF & URL SETTINGS --------------
-\PassOptionsToPackage{hyphens}{url}
+\usepackage{caption,subcaption}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,arrows,calc,backgrounds,fit,
+  shapes.geometric,shapes.arrows,patterns,decorations.markings,
+  decorations.pathreplacing}
+\pgfdeclarelayer{above}
+\pgfsetlayers{background,main,above}
+\tikzset{on above layer/.style={
+  execute at begin scope={\pgfonlayer{above}},
+  execute at end scope={\endpgfonlayer}}}
+\usepackage{eurosym}
+\usepackage{float,placeins}
+\usepackage{enumitem}
+\usepackage{csquotes}
 \usepackage{xurl}
 \usepackage[hidelinks]{hyperref}
-\hypersetup{breaklinks=true}
+\usepackage[nameinlink,noabbrev,capitalise]{cleveref}
+\biboptions{numbers,sort&compress}
+\captionsetup{font=small,labelfont=bf,labelsep=period}
+\captionsetup[table]{position=top,skip=5pt}
+\captionsetup[subfigure]{font=small,labelfont=normalfont}
+\setlength{\parindent}{1em}
+\setlength{\parskip}{0pt}
+\setlength{\columnsep}{6mm}
+\setlength{\emergencystretch}{1em}
+\setlength{\jot}{3pt}
+\renewcommand{\arraystretch}{1.13}
+\setlist{nosep,leftmargin=*}
+\setcounter{secnumdepth}{3}
+\setcounter{dbltopnumber}{3}
+\renewcommand{\dbltopfraction}{0.9}
+\renewcommand{\dblfloatpagefraction}{0.7}
+\allowdisplaybreaks[1]
+\urlstyle{same}
 \Urlmuskip=0mu plus 1mu\relax
-\AtBeginBibliography{\sloppy\setlength\emergencystretch{3em}}
-
-% ----------- PAGE SETTINGS / TOC --------------
-\newdateformat{ddmmyyyy}{\twodigit{\THEDAY}-\twodigit{\THEMONTH}-\THEYEAR}
-\setcounter{tocdepth}{2}
-
-% (Optional) a touch more breathing room in tables
-\renewcommand{\arraystretch}{1.15}
-
-% ----------- CUSTOM COMMANDS --------------
+\newcommand{\timesteps}{\mathcal{T}}
+\newcommand{\hpset}{\mathcal{H}}
 \newcommand{\quotes}[1]{``#1''}
-\newcommand\tab[1][1cm]{\hspace*{#1}}
-\allowdisplaybreaks % allow align environments to break pages
-
-% --- Make bibliography lines wrap nicely ---
-\AtBeginBibliography{%
-  \raggedright
-  \sloppy
-  \setlength{\emergencystretch}{3em}
-}
-% Better URL/DOI line breaking in bibliography
-\setcounter{biburlnumpenalty}{9000}
-\setcounter{biburlucpenalty}{9000}
-\setcounter{biburllcpenalty}{9000}
+% No publisher branding or claim of journal submission on the title page.
+\makeatletter
+\def\ps@pprintTitle{%
+  \let\@oddhead\@empty\let\@evenhead\@empty
+  \def\@oddfoot{\hfil\thepage\hfil}%
+  \let\@evenfoot\@oddfoot}
+\makeatother
