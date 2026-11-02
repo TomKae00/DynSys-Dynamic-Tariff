@@ -1,0 +1,50 @@
+\documentclass[border=2mm]{standalone}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{tikz-3dplot}
+\usepackage{tikz-layers} 
+\usetikzlibrary{positioning, arrows.meta,shapes.geometric, arrows, patterns,shapes.arrows}
+\usetikzlibrary{calc,positioning,arrows,arrows.meta,shapes.arrows,decorations.pathreplacing}
+\usetikzlibrary{calc,positioning,arrows,arrows.meta,shapes.arrows,decorations.pathreplacing,shapes,decorations.markings}
+\usepackage{xcolor}
+\begin{document}
+
+\definecolor{npgred}{HTML}{DC0000}
+\definecolor{npgblue}{HTML}{3C5488}
+
+\tikz[font=\small, every node/.style={outer sep=0pt, inner sep=0pt, rounded corners=0pt, align=center}, w/.style={minimum width=#1}, h/.style={minimum height=#1}, s/.style={minimum size=#1}]
+{
+    \colorlet{myblue}{npgblue}
+    \colorlet{myred}{npgred}
+
+    % Trapezium
+    \node[w=3cm,h=1.25cm] (t1) {};
+    \draw[top color=myred!50, bottom color=myblue!60] (t1.north west)--(t1.north east)--coordinate[pos=.1](a) coordinate[pos=.5](b) coordinate[pos=.9](c) ($(t1.south east)+(-.5,0)$)--($(t1.south west)+(.5,0)$)--(t1.north west);
+
+    % Diamonds
+    \begin{scope}[on above layer]
+    \node[draw, fill=white, diamond, s=.3cm, right=1.65cm of a]  (d1) {};
+    \node[draw, fill=white, diamond, s=.3cm]  (d3) at (d1|-c) {};
+    \node[draw, fill=white, diamond, s=.3cm, right=.7cm of b]  (d2) {};  
+    \end{scope}
+
+    % Lines 
+    \node[w=1cm, h=.35cm, anchor=north] (sq) at (d1) {};
+    \node[w=1cm, h=.35cm, anchor=north] (sq1) at (d3) {};
+
+    \draw[thick, myblue, decoration={markings, mark=at position 0.5 with {\arrowreversed{latex}}}, postaction={decorate}] (c)--(d3);
+    \draw[thick, myblue, decoration={markings, mark=at position 0.5 with {\arrowreversed{latex}}}, postaction={decorate}] (d3.east)--coordinate[pos=1] (z) +(1.5,0);
+
+    \draw[thick, myblue!50!myred, decoration={markings, mark=at position 0.8 with {\arrow{latex}}}, postaction={decorate}] (b)--(d2) (d2)-| (sq.south west);
+    \draw[semithick, myblue, densely dotted] (sq1.north west) |- (sq1.south east) -- (sq1.north east);
+
+    \draw[semithick, myred, decoration={markings, mark=at position 0.2 with {\arrow{latex}}, mark=at position 0.9 with {\arrow{latex}}}, postaction={decorate}] (a)--(sq.north west) |- (sq.south east)--(sq.north east)--coordinate[pos=1] (w) (d1-|z);
+    \draw[semithick, myblue, densely dotted] (sq1.north west)--(sq1.north east);
+
+    \draw[semithick, myred, densely dotted] (sq.north west)--(sq.north east);
+
+    % Labels
+    %\node[align=left, font=\small, anchor=west] at ([xshift=2mm]$(w)!.5!(z)$) {\textbf{Discharge (2)}\\Inlet: bottom\\Outlet: top \& middle};
+}
+
+\end{document}

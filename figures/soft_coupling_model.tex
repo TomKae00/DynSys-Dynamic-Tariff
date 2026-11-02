@@ -1,0 +1,258 @@
+\documentclass[border=2mm]{standalone}
+\usepackage{tikz}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usetikzlibrary{positioning,arrows.meta,calc,backgrounds,fit}
+
+\begin{document}
+
+\definecolor{npgred}{HTML}{DC0000}
+\definecolor{npgblue}{HTML}{3C5488}
+\definecolor{softgrey}{HTML}{F4F4F4}
+\definecolor{darkgrey}{HTML}{555555}
+
+\begin{tikzpicture}[
+    font=\footnotesize,
+    >=Latex,
+    flow/.style={
+        -{Latex[length=2.2mm]},
+        thick,
+        draw=darkgrey
+    },
+    dataflow/.style={
+        -{Latex[length=2.2mm]},
+        thick,
+        dashed,
+        draw=npgblue!85
+    },
+    stageflow/.style={
+        -{Latex[length=2.4mm]},
+        very thick,
+        draw=npgred!80
+    },
+    input/.style={
+        draw=npgblue!70,
+        fill=npgblue!7,
+        rounded corners=3pt,
+        text width=2.65cm,
+        minimum height=0.68cm,
+        inner sep=4pt,
+        align=center
+    },
+    process/.style={
+        draw=npgred!60,
+        fill=white,
+        rounded corners=3pt,
+        text width=3.35cm,
+        minimum height=0.66cm,
+        inner sep=4pt,
+        align=center
+    },
+    component/.style={
+        draw=npgred!55,
+        fill=npgred!6,
+        rounded corners=3pt,
+        text width=1.65cm,
+        minimum height=0.58cm,
+        inner sep=3pt,
+        align=center,
+        font=\scriptsize
+    },
+    result/.style={
+        draw=black!38,
+        fill=white,
+        rounded corners=3pt,
+        text width=2.65cm,
+        minimum height=0.68cm,
+        inner sep=4pt,
+        align=center
+    }
+]
+
+% --------------------------------------------------------------------------
+% Content nodes
+% --------------------------------------------------------------------------
+\node[
+    font=\bfseries,
+    text=npgblue!90!black,
+    align=center
+] (inputsTitle) at (0,3.05) {External data\\and assumptions};
+
+\node[
+    font=\bfseries,
+    text=npgred!90!black
+] (tariffTitle) at (4.85,3.05) {Stage 1: Tariff derivation};
+
+\node[
+    font=\bfseries,
+    text=npgred!90!black
+] (localTitle) at (4.85,-0.90) {Stage 2: Local operation};
+
+\node[
+    font=\bfseries,
+    text=black!78
+] (resultsTitle) at (10.25,3.05) {Endogenous results};
+
+% --------------------------------------------------------------------------
+% External inputs
+% --------------------------------------------------------------------------
+\node[input] (plantdata) at (0,1.82)
+{Fuel and CO$_2$ prices,\\plant costs and efficiencies};
+
+\node[input] (elprice) at (0,0.38)
+{DK2 electricity price\\$c^{el}_t$};
+
+\node[input] (localdata) at (0,-1.98)
+{Høje Taastrup heat demand,\\COPs and technical parameters};
+
+% --------------------------------------------------------------------------
+% Stage 1: upstream price formation and tariff construction
+% --------------------------------------------------------------------------
+\node[process] (supplymodel) at (4.85,2.18)
+{Marginal heat-cost calculation\\CHP and waste incineration};
+
+\node[
+    process,
+    below=0.35cm of supplymodel,
+    text width=3.45cm
+] (tariff)
+{Marginal heat cost $MC^{\mathrm{heat}}_t$\\and tariff scenarios $c^{DH}_t$};
+
+\draw[stageflow] (supplymodel.south) -- (tariff.north);
+
+% --------------------------------------------------------------------------
+% Stage 2: local operational optimization
+% --------------------------------------------------------------------------
+\node[
+    font=\scriptsize,
+    text=darkgrey
+] (objective) at (4.85,-1.50)
+{Local operating expenditure: $\displaystyle \min C^{\mathrm{HT}}$};
+
+\node[component] (cityhp) at (3.90,-2.23)
+{City2\\heat pump};
+\node[component] (gwhp) at (5.80,-2.23)
+{Groundwater\\heat pump};
+\node[component] (ptes) at (3.90,-2.98)
+{PTES};
+\node[component] (dhimport) at (5.80,-2.98)
+{DH import\\and HX};
+
+\node[
+    font=\scriptsize,
+    text=darkgrey,
+    text width=3.95cm,
+    align=center
+] (constraints) at (4.85,-3.80)
+{Energy balances, storage dynamics, capacities,\\
+minimum load, ramping and switching constraints};
+
+% --------------------------------------------------------------------------
+% Results
+% --------------------------------------------------------------------------
+\node[result] (dispatch) at (10.25,2.20)
+{Hourly dispatch\\and external imports};
+
+\node[result] (storage) at (10.25,0.95)
+{PTES charging, discharging,\\SOC and cycling};
+
+\node[result] (utilization) at (10.25,-0.40)
+{Heat-pump and component\\utilization};
+
+\node[result] (comparison) at (10.25,-1.75)
+{Local expenditure and common\\operational-cost comparison};
+
+% --------------------------------------------------------------------------
+% Content-fitted panel backgrounds
+% --------------------------------------------------------------------------
+\begin{scope}[on background layer]
+\node[
+    draw=black!28,
+    fill=softgrey,
+    rounded corners=5pt,
+    fit=(inputsTitle)(plantdata)(elprice)(localdata),
+    inner xsep=0.28cm,
+    inner ysep=0.28cm
+] (inputsPanel) {};
+
+\node[
+    draw=npgred!75,
+    fill=npgred!3,
+    rounded corners=5pt,
+    fit=(tariffTitle)(supplymodel)(tariff),
+    inner xsep=0.28cm,
+    inner ysep=0.18cm
+] (tariffPanel) {};
+
+\node[
+    draw=npgred!75,
+    fill=npgred!3,
+    rounded corners=5pt,
+    fit=(localTitle)(objective)(cityhp)(gwhp)(ptes)(dhimport)(constraints),
+    inner xsep=0.28cm,
+    inner ysep=0.18cm
+] (localPanel) {};
+
+\node[
+    draw=black!28,
+    fill=softgrey,
+    rounded corners=5pt,
+    fit=(resultsTitle)(dispatch)(storage)(utilization)(comparison),
+    inner xsep=0.28cm,
+    inner ysep=0.28cm
+] (resultsPanel) {};
+\end{scope}
+
+% --------------------------------------------------------------------------
+% Information flows
+% --------------------------------------------------------------------------
+\draw[dataflow]
+    (plantdata.east)
+    -- ++(0.48,0)
+    |- ([yshift=0.12cm]supplymodel.west);
+
+\draw[dataflow]
+    (elprice.east)
+    -- ++(0.66,0)
+    |- ([yshift=-0.20cm]supplymodel.west);
+
+\draw[dataflow]
+    (elprice.east)
+    -- ++(0.36,0)
+    |- ([yshift=0.45cm]localPanel.west);
+
+\draw[dataflow]
+    (localdata.east)
+    -- ++(0.50,0)
+    |- ([yshift=-0.45cm]localPanel.west);
+
+\draw[stageflow]
+    (tariff.south)
+    --
+    (localPanel.north);
+
+\draw[flow]
+    (localPanel.east)
+    --
+    (resultsPanel.west |- localPanel.east);
+
+% --------------------------------------------------------------------------
+% Soft-coupling statement
+% --------------------------------------------------------------------------
+\node[
+    draw=npgblue!55,
+    fill=npgblue!5,
+    rounded corners=4pt,
+    text width=11.10cm,
+    inner sep=5pt,
+    font=\scriptsize,
+    align=center,
+    below=0.52cm of localPanel.south
+] (note) {
+    \textbf{Soft coupling:}
+    Stage 1 supplies the tariff signal to Stage 2; local operation responds
+    to the signal without feeding back into the upstream price-setting model.
+};
+
+\end{tikzpicture}
+\end{document}

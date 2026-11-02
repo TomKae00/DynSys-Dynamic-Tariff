@@ -1,0 +1,49 @@
+% the utilization itself is not highly dependent on the underlying pricing structure, in our case it is dependent on it, since we have two player in the system. Therefore it is better to reformulate this part. 
+
+\begin{abstract}
+%Pit thermal energy storage (PTES) can provide district-heating flexibility by shifting heat supply across time, but existing tariffs may provide insufficient incentives for its utilisation. Under a monthly tariff, local operators do not observe hourly variations in upstream production costs. Charging storage therefore offers little advantage over direct heat imports, while thermal losses further discourage cycling.
+
+Pit thermal energy storage (PTES) can provide district-heating flexibility by shifting heat production relative to heat demand. In systems with combined heat and power (CHP) generation, it allows heat to be produced and stored when electricity prices are high and the value of co-produced electricity makes CHP operation particularly attractive. However, existing tariff structures may not transmit this time-varying system value to local storage operators. Under a monthly tariff, hourly variations in upstream heat-production costs are not reflected in the price paid by the local operator. Consequently, the tariff provides little economic incentive to charge and discharge the storage in response to these variations, while thermal losses further discourage cycling.
+
+This paper develops a method for determining a dynamic heat tariff and evaluates whether it improves PTES utilisation. The hourly tariff is derived from the marginal heat cost of an upstream biomass combined heat and power plant, accounting for fuel and operating costs, carbon costs, conversion efficiencies, and the market value of co-produced electricity. % A fixed/revenue adjustment component supports cost recovery without changing the marginal dispatch signal. (Possible idea, lets see) 
+
+The tariff is soft-linked to an hourly mixed integer model of the Høje Taastrup district heating system, jointly optimising direct heat imports, a 3.3~GWh PTES, and two heat pumps under realistic operating constraints. Using 2024 heat-demand and electricity price data, the dynamic tariff is compared with the incumbent monthly VEKS tariff and an unconstrained PTES benchmark.
+
+%\textbf{Include another paragraph about the results}
+\end{abstract}
+
+
+
+\section{Introduction}
+
+Thermal energy storage is a key enabler for flexible and efficient operation of district heating systems. In particular, PTES allows heat production and consumption to be decoupled in time, thereby increasing operational flexibility and supporting the integration of variable energy sources.
+
+However, the operational value of PTES depends strongly on the economic signals faced by the storage operator. In practice, tariff structures may not reflect the underlying marginal costs of heat generation. This can reduce the incentive for economically efficient charging and discharging and may lead to underutilization of available storage capacity.
+
+The district heating (DH) system of the Greater Copenhagen area is a complex interconnected system that consists of multiple heat producers and network operators. Utility companies operate large-scale combined heat and power (CHP) plants burning biomass that operate on both electricity and heat markets, waste incineration plants whose excess heat is being fed into the DH system, as well as numerous short-term-operated thermal energy storage (TES) systems, gas plants, and heat pumps that are designed to meet peak demand. The heat is being bought by a central dispatch operator, Varmelast, that optimises the heat production in the area to minimise total system costs. It includes transmission operators that transport heat from some of the major heat producers to the distribution operators, whose role is to provide heat to the end users in the municipality. 
+
+The Høje Taastrup PTES is a large-scale TES system in the area, and was introduced to store heat supplied by the transmission pipe for later use inside the distribution subsystem. However, despite its large capital expenditure of more than 12 million \texteuro ~\cite{sifnaios2025performance}, it has been under-utilized so far, which means that more expensive heat pumps or even gas or oil boilers have to be turned on to meet the heat demand, leading to higher system costs. Despite the heat generation being tightly coupled to the electricity market, the district heating distribution operators have only a monthly-varying heat price, therefore, not provide economic incentives for distribution operators to fully utilize the PTES system.
+
+
+This study investigates how a dynamic tariff for heat delivered through PTES discharge can be derived to align local operating incentives with the economic value of storage in a multi-operator district heating system. The Høje Taastrup PTES provides the case study. The proposed arrangement retains the monthly VEKS tariff for direct heat supply as the reference and introduces a time-varying discount for PTES discharge. Tariff derivation must account for the upstream economic signal, the additional costs of local discharge and the value of retaining heat for later use. The research question is therefore: \emph{How can a dynamic PTES discharge tariff be derived to support economically efficient storage operation within coordinated heat scheduling?}
+
+An hourly operational optimisation model provides a benchmark for coordinated operation under specified technical assumptions. External heat demand, electricity prices and upstream heat-cost signals are supplied exogenously, following a soft-coupled approach inspired by the Frigg framework~\cite{schledorn2022a}. The model represents the
+interaction between transmission heat supply, local heat production and PTES operation. The benchmark is used to assess the operational value relevant to tariff construction; it does not constitute a prediction of HTF's actual response to a new tariff.
+
+The evaluation distinguishes HTF's operating expenditure, upstream heat-sale revenue and estimated operational resource costs. Comparisons with the existing monthly payment arrangement and a constant discharge discount assess the additional value of the proposed time-varying incentive, while sensitivity analyses examine its dependence on the represented operating restrictions and economic assumptions. The objective is to support economically valuable storage operation and make its distributional effects explicit; increased cycling alone is not treated as evidence of improved performance.
+
+
+% This paper investigates how dynamic marginal heat pricing can improve PTES operation in the Høje Taastrup district heating system. For this purpose, a stylized operational optimization model is developed to analyse the interaction between external heat supply, local heat production, heat demand, and PTES dispatch.
+
+% The model follows a soft-coupled approach inspired by the Frigg modelling framework~\cite{schledorn2022a}, where external system-level signals are used as inputs for a more detailed operational optimization model. In this paper, time series such as heat demand, electricity prices, and marginal heat generation costs are provided as exogenous inputs to determine cost-optimal PTES operation. This structure allows the model to be used both for scenario analysis and as a basis for forecast-based operational decision support. The focus of this paper is to evaluate how dynamic pricing signals can support economically efficient PTES operation and provide the foundation for future energy management applications.
+
+
+
+% \textbf{Possible research question}
+
+% \begin{itemize}
+%     \item Develop a dynamic heat price for the Greater Copenhagen area based on marginal pricing. 
+%     \item Show how a dynamic heat price for DH operators leads to a higher utilization of the PTES system
+%     \item Can a dynamic heat price lead to lower total system costs?
+% \end{itemize}
+% This study addresses the gap between dynamic heat pricing studies, which mainly focus on demand response, and PTES flexibility studies, which mainly evaluate storage integration from a system-cost perspective. The research question is therefore: How does a dynamic marginal-cost-based heat price signal affect the operation and flexibility value of a short-term PTES under realistic technical operating constraints?

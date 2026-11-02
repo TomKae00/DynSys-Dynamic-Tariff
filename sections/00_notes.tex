@@ -1,0 +1,38 @@
+% Notes: 
+% \begin{itemize}
+%     \item How to design dynamic tariffs? 
+%     \item Include a part for the COP approximation, how it varies over the year? 
+%     \item Is the district heating system run on a constant supply temperature or is it run depending on the outside temperature? 
+%     \item Are there other components included in the system? 
+%     \item It should depend on the inertia of the buildings, the supply temperature of the DH system
+%     \item Extend a for a higher demand, as outlook
+%     \item Mention in the overleaf document what could be done and will be done as extension?
+% \end{itemize}
+
+% Using 2024 data, the incumbent monthly tariff is compared with a mean-price-adjusted dynamic tariff and an unconstrained PTES benchmark. Dynamic pricing [increases PTES utilisation from X to Y cycles], [changes operating cost by X%], and alters the interaction between direct heat imports, storage, and heat pumps. Technical constraints [quantified effect]. The findings show whether the marginal-cost signal creates sufficient price spreads to incentivise economically valuable and technically feasible PTES operation.
+
+% Another version
+
+% \begin{abstract}
+% Pit thermal energy storage (PTES) can provide district-heating flexibility by shifting heat purchases across time, but its technical potential is not necessarily activated under existing tariffs. In Høje Taastrup, observed PTES utilisation is approximately 10 equivalent full cycles per year, compared with an operational ambition of 25--30 cycles. The incumbent monthly tariff provides no within-month incentive to shift imports between low- and high-cost hours, while storage losses further reduce the attractiveness of cycling. A dynamic tariff based on marginal heat-generation costs may provide the missing incentive by rewarding charging when external heat is inexpensive and discharging when it is expensive.
+
+% This paper evaluates how dynamic marginal heat pricing affects the incentive, utilisation, and operational value of PTES. An hourly mixed-integer model of the Høje Taastrup district-heating system jointly optimises heat imports, a 3.3~GWh PTES, and two heat pumps. Heat demand, eastern Danish electricity prices, and upstream marginal heat-generation costs are soft-linked as external time series. Storage losses and realistic capacity, ramping, operating-mode, and switching constraints are represented explicitly.
+
+% \textbf{Include another paragraph about the results}
+% \end{abstract}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Notes regarding the scientific gap and how to point to it
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% a different possible version for the abstract 
+
+\begin{comment}
+Pit thermal energy storage (PTES) can provide district-heating flexibility by shifting heat production relative to heat demand. In systems with combined heat and power generation, heat can be produced and stored when electricity prices are high and co-produced electricity is most valuable. In multi-operator district heating networks, however, system dispatch and commercial settlement may operate at different temporal resolutions. Periodic cost-recovery tariffs may therefore not transmit the time-varying value of storage to the operator controlling its use.
+
+This coordination problem is examined in Greater Copenhagen, where Varmelast coordinates system-wide heat production, VEKS charges the Høje Taastrup PTES based on this dispatch, and Høje Taastrup District Heating schedules its discharge under a monthly heat tariff. This paper develops a dynamic heat tariff based on a marginal-cost proxy for upstream heat production, accounting for fuel and operating costs, carbon costs, conversion efficiencies and the market value of co-produced electricity.
+
+The tariff is soft-linked to an hourly mixed-integer optimisation model of the Høje Taastrup district heating system. The model jointly optimises direct heat imports, a 3.3 GWh PTES and two heat pumps under realistic operating constraints using heat-demand and electricity-price data for 2024. Monthly and dynamic tariff structures are compared using level-matched scenarios, while their effects on local expenditure, upstream revenue and a common operational-cost metric are evaluated separately.
+\end{comment}

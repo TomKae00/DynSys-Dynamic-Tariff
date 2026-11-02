@@ -1,0 +1,48 @@
+\documentclass[../main.tex]{subfiles}
+
+
+\begin{document}
+
+
+\begin{tikzpicture}
+% To help
+%\draw[step=1cm,gray,very thin] (0,0) grid (9,6);
+
+% Define the trapezoidal shape
+\filldraw[bottom color=npgblue, top color=npgred, thick] 
+    (1, 0) -- (0, 3) -- (6, 3) -- (5, 0) -- cycle; 
+
+
+% Arrows on the right
+\draw[->, thick, red] (5.833, 2.5) -- (8, 2.5) -- (10, 2.5); % Top red arrow
+\draw[dashed, thick, red] (7.5, 2.5) -- (7.5, 2) -- (8.5, 2) -- (8.5, 2.5); % 
+
+\draw[->, thick, purple] (5.5, 1.5) -- (7, 1.5) -- (8, 1.5) -- (8, 2); % 
+\draw[->, thick, purple] (5.5, 1.5) -- (7, 1.5);
+
+\draw[->, thick, blue] (5.166, 0.5) -- (8, 0.5) -- (10, 0.5); % 
+
+\draw[dashed, thick, blue] (7.5, 0.5) -- (7.5, 0) -- (8.5, 0) -- (8.5, 0.5); % 
+
+% \draw[->, thick, red] (2, -0.5) -- (4, -0.5); % Top red arrow
+% \draw[dashed, ->, thick, red] (4, -0.5) -- (6, -0.5); % Dashed red continuation
+
+% \draw[->, thick, blue] (2, -1.5) -- (4, -1.5); % Bottom blue arrow
+% \draw[dashed, ->, thick, blue] (4, -1.5) -- (6, -1.5); % Dashed blue continuation
+
+
+% Diamond shapes (decision points)
+\node[diamond, draw, thick, fill=white, minimum size=0.5cm] at (8, 2.5) {}; % Top right
+
+\node[diamond, draw, thick, fill=white, minimum size=0.5cm] at (7, 1.5) {}; % Middle right
+
+\node[diamond, draw, thick, fill=white, minimum size=0.5cm] at (8, 0.5) {}; % Bottom right
+
+% % Dotted connections between diamonds
+% \draw[dotted, thick] (4, 0.5) -- (4, -0.5); % Vertical dotted line
+
+
+
+\end{tikzpicture}
+
+\end{document}
