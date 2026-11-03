@@ -10,7 +10,7 @@ This structure allows the model to be applied both for retrospective analysis an
 
 In the present formulation, the optimization is performed with hourly resolution and perfect foresight over the considered time horizon. The resulting operation should therefore be interpreted as a benchmark for economically efficient dispatch under the given input assumptions, rather than as a direct representation of actual real-time control.
 
-% \begin{figure*}[t]
+% \begin{figure}[t]
 %     \centering
 %     \begin{subfigure}[b]{0.9\linewidth}
 %         \centering
@@ -20,14 +20,14 @@ In the present formulation, the optimization is performed with hourly resolution
 %     \end{subfigure}
 %     \caption{Frigg-inspired modelling framework used for the PTES optimization.}
 %     \label{fig:frigg-inspired-framework}
-% \end{figure*}
+% \end{figure}
 
-\begin{figure*}[t]
+\begin{figure}[t]
     \centering
-    \resizebox{\linewidth}{!}{\input{figures/soft_coupling_model_body}}
+    \resizebox{\linewidth}{!}{\inputtikzfigure{figures/soft_coupling_model_body}}
     \caption{Soft-coupled modelling framework for tariff derivation and local PTES operation in Høje Taastrup.}
     \label{fig:frigg-inspired-framework}
-\end{figure*}
+\end{figure}
 
 %\textbf{Objective function in the figure is not updated yet}
 
@@ -214,7 +214,7 @@ A separate fuel tax term is not included in the formulation, since carbon-relate
 
 For the numerical implementation, the model uses the 2020 central values for a large wood-chip-fired back-pressure CHP plant from the Danish Energy Agency technology catalogue. The parameter values are summarized in Table~\ref{tab:dynamic_heat_price_parameters}.
 
-\begin{table*}[tbp]
+\begin{table}[tbp]
     \centering
     \small
     \caption{Parameter assumptions for the dynamic heat price formulation.}
@@ -242,7 +242,7 @@ For the numerical implementation, the model uses the 2020 central values for a l
         Annual average net electrical efficiency for large wood-chip back-pressure CHP, 2020 central value \cite{dea2026technologycatalogue}. \\
         \bottomrule
     \end{tabularx}
-\end{table*}
+\end{table}
 
 
 With these assumptions, Eq.~\eqref{eq:marginal_heat_cost} becomes
@@ -278,7 +278,7 @@ electricity prices, capacities, efficiencies, storage parameters, and initial
 conditions. Each optimized run minimizes the local operating expenditure
 defined in Eq.~\eqref{eq:objective}.
 
-\begin{table*}[tbp]
+\begin{table}[tbp]
 \centering
 \small
 \caption{Model scenarios and their analytical purpose.}
@@ -314,7 +314,7 @@ $R_4$
 & $R_2$--$R_4$: effect of technical constraints \\
 \bottomrule
 \end{tabularx}
-\end{table*}
+\end{table}
 
 In $R_0$, PTES and heat-exchanger operation are prescribed according to the
 reference operation, while the remaining local system is optimized. In $R_1$,

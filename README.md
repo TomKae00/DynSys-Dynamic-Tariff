@@ -10,8 +10,10 @@ Locally, with TeX Live's `elsarticle` class installed:
 latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
 ```
 
-The default is Elsevier's two-column `5p` article layout. To prepare a
-single-column review version, change the class options to `[preprint,12pt]`.
+The default is Elsevier's single-column manuscript layout, using
+`\documentclass[preprint,12pt,times]{elsarticle}`. The paper structure, equation
+groups, and existing illustration files are retained. Float containers are
+adapted to the single-column page.
 There is no publisher logo, journal name, or claim of acceptance/submission.
 TikZ figure bodies are included directly; shell escape is not needed.
 
@@ -50,10 +52,9 @@ No text or numerical findings from those papers have been copied.
 - Keep the five-step future workflow; identify it as a proposed extension.
 - Preserve loose discussion notes in the uncompiled `sections/00_notes.tex`.
 - Remove a duplicate bibliography key and supply three previously missing entries.
-- Simplify the workflow figure to straight borders and labelled arrows, and
-  correct its producer label to match the single biomass CHP
-  proxy currently described in the methodology (waste incineration is not yet
-  modelled in this manuscript formulation).
+- Preserve the current workflow diagram, PTES drawings, charts, and other
+  illustration files. A local input wrapper keeps the existing TikZ font sizes
+  when the surrounding manuscript uses 12 pt type.
 
 ## Scientific work still open
 
@@ -76,8 +77,11 @@ the exact annual compensation and contractual allocation still require a primary
 contract or stakeholder record. Institutional descriptions have not been fact
 audited as part of the layout edit.
 
-## Layout validation
+## Single-column layout validation
 
-The final pdfLaTeX/BibTeX build passes with no undefined references or citations,
-no duplicate bibliography keys, and no overfull boxes. All 14 rendered pages were
-visually reviewed. This validates typesetting, not the numerical model.
+The pdfLaTeX/BibTeX build passes with no undefined references or citations and no
+overfull boxes. All 29 rendered pages were reviewed. SHA-256 comparisons confirm
+that all 29 files under `figures/` are byte-for-byte unchanged by this revision.
+Only the manuscript layout, float containers, table fitting, and surrounding TikZ
+font-size wrapper were adjusted; the mathematical formulation and numerical
+results were retained. This validates typesetting, not the numerical model.

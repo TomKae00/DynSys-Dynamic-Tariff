@@ -1,4 +1,4 @@
-% Page geometry and the two-column article layout are supplied by elsarticle.
+% Page geometry and the single-column manuscript layout are supplied by elsarticle.
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[english]{babel}
@@ -30,21 +30,28 @@
 \captionsetup[subfigure]{font=small,labelfont=normalfont}
 \setlength{\parindent}{1em}
 \setlength{\parskip}{0pt}
-\setlength{\columnsep}{6mm}
 \setlength{\emergencystretch}{1em}
 \setlength{\jot}{3pt}
 \renewcommand{\arraystretch}{1.13}
 \setlist{nosep,leftmargin=*}
 \setcounter{secnumdepth}{3}
-\setcounter{dbltopnumber}{3}
-\renewcommand{\dbltopfraction}{0.9}
-\renewcommand{\dblfloatpagefraction}{0.7}
 \allowdisplaybreaks[1]
 \urlstyle{same}
 \Urlmuskip=0mu plus 1mu\relax
 \newcommand{\timesteps}{\mathcal{T}}
 \newcommand{\hpset}{\mathcal{H}}
 \newcommand{\quotes}[1]{``#1''}
+% Keep the existing figure typography when changing the manuscript to 12 pt.
+% The source artwork is included unchanged and scales to the available width.
+\newcommand{\inputtikzfigure}[1]{%
+  \begingroup
+  \fontsize{10}{12}\selectfont
+  \renewcommand{\small}{\fontsize{9}{11}\selectfont}%
+  \renewcommand{\footnotesize}{\fontsize{8}{9.5}\selectfont}%
+  \renewcommand{\scriptsize}{\fontsize{7}{8}\selectfont}%
+  \input{#1}%
+  \endgroup
+}
 % No publisher branding or claim of journal submission on the title page.
 \makeatletter
 \def\ps@pprintTitle{%
