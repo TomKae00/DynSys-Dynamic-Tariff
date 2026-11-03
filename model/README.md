@@ -5,9 +5,7 @@ endogenous CHP output, heat pumps, boilers and storage. It replaces the previous
 single CHP heat-cost proxy with a small Copenhagen supply portfolio. It is a
 transparent research scenario, not a replica of Varmelast's confidential model.
 
-The manuscript and this extension currently describe different model versions.
-Existing manuscript results have not been overwritten or presented as results of
-this model. See [the formulation](docs/formulation.md), [input provenance](docs/data_sources.md)
+See [the formulation](docs/formulation.md), [input provenance](docs/data_sources.md)
 and [validation record](docs/validation.md) before interpreting numerical output.
 
 ## Run
@@ -83,7 +81,7 @@ It does not yet redispatch the upstream system after local deviations, calculate
 an imbalance penalty, or derive a final tariff. A local bill reduction alone is
 not evidence of a system cost saving. The separately named `legacy_owned_store`
 settlement option reproduces the old charging-purchase experiment; it is not the
-default paper boundary.
+default settlement boundary.
 
 ## Structure and migration
 
