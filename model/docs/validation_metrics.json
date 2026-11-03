@@ -1,0 +1,178 @@
+{
+  "validation_date": "2026-11-03",
+  "tests": "13 passed, including optional Gurobi 13.0.3 small-case equivalence",
+  "cases": {
+    "winter": {
+      "hours": 168,
+      "objective_kind": "system",
+      "objective_dkk": 30161388.98837381,
+      "solver_status": 0,
+      "mip_gap": 1.7863142091781665e-06,
+      "mip_dual_bound_dkk": 30161335.11065609,
+      "variables": 7392,
+      "constraints": 7725,
+      "max_constraint_violation": 9.094947017729282e-13,
+      "ptes_charge_mwh": 1500.2356765051627,
+      "ptes_discharge_mwh": 1472.9999999999995,
+      "ptes_equivalent_cycles": 0.44636363636363624,
+      "ptes_terminal_mwh": 1500.0,
+      "price_method": "LP regional-balance dual with all integer decisions fixed",
+      "runtime": {
+        "python": "3.12.14",
+        "numpy": "2.3.5",
+        "pandas": "2.2.3",
+        "scipy": "1.17.0"
+      },
+      "input_provenance": {
+        "kind": "prepared_inputs",
+        "sha256": "1609049b63f5d91f9bc974dcdc0a414f9ebd5dd928abac71fea4138ab60466af"
+      },
+      "absolute_optimality_gap_dkk": 53.87771771848202
+    },
+    "summer": {
+      "hours": 168,
+      "objective_kind": "system",
+      "objective_dkk": -16760860.785772119,
+      "solver_status": 0,
+      "mip_gap": 9.338053270931538e-06,
+      "mip_dual_bound_dkk": -16761017.299583003,
+      "variables": 7392,
+      "constraints": 7725,
+      "max_constraint_violation": 3.979039320256561e-13,
+      "ptes_charge_mwh": 1253.4656396537987,
+      "ptes_discharge_mwh": 1204.2942592,
+      "ptes_equivalent_cycles": 0.36493765430303027,
+      "ptes_terminal_mwh": 1500.0,
+      "price_method": "LP regional-balance dual with all integer decisions fixed",
+      "runtime": {
+        "python": "3.12.14",
+        "numpy": "2.3.5",
+        "pandas": "2.2.3",
+        "scipy": "1.17.0"
+      },
+      "input_provenance": {
+        "kind": "prepared_inputs",
+        "sha256": "1609049b63f5d91f9bc974dcdc0a414f9ebd5dd928abac71fea4138ab60466af"
+      },
+      "absolute_optimality_gap_dkk": 156.5138108842075
+    },
+    "annual_lp": {
+      "hours": 8784,
+      "objective_kind": "system",
+      "objective_dkk": -233802529.76900947,
+      "solver_status": 0,
+      "mip_gap": 0.0,
+      "mip_dual_bound_dkk": -233802529.76900947,
+      "variables": 386496,
+      "constraints": 404061,
+      "max_constraint_violation": 2.0463630789890885e-12,
+      "ptes_charge_mwh": 79487.31926900987,
+      "ptes_discharge_mwh": 76125.91690176394,
+      "ptes_equivalent_cycles": 23.068459667201193,
+      "ptes_terminal_mwh": 1500.0,
+      "runtime": {
+        "python": "3.12.14",
+        "numpy": "2.3.5",
+        "pandas": "2.2.3",
+        "scipy": "1.17.0"
+      },
+      "input_provenance": {
+        "kind": "prepared_inputs",
+        "sha256": "1609049b63f5d91f9bc974dcdc0a414f9ebd5dd928abac71fea4138ab60466af"
+      },
+      "absolute_optimality_gap_dkk": 0.0
+    },
+    "local_reference": {
+      "hours": 168,
+      "objective_kind": "local",
+      "objective_dkk": 3649447.916102171,
+      "solver_status": 0,
+      "mip_gap": 0.0,
+      "mip_dual_bound_dkk": 3649447.916102171,
+      "variables": 2352,
+      "constraints": 5203,
+      "max_constraint_violation": 1.3073986337985843e-12,
+      "ptes_charge_mwh": 1500.2356765051672,
+      "ptes_discharge_mwh": 1470.5141961696413,
+      "ptes_equivalent_cycles": 0.4456103624756489,
+      "ptes_terminal_mwh": 1500.0,
+      "runtime": {
+        "python": "3.12.14",
+        "numpy": "2.3.5",
+        "pandas": "2.2.3",
+        "scipy": "1.17.0"
+      },
+      "input_provenance": {
+        "kind": "prepared_inputs",
+        "sha256": "1609049b63f5d91f9bc974dcdc0a414f9ebd5dd928abac71fea4138ab60466af",
+        "schedule_sha256": "931435f03a3a5bdaed6891a3fcd4a0bcd289dc2cbe676c2bdd5673bb01f371d5"
+      },
+      "absolute_optimality_gap_dkk": 0.0
+    },
+    "local_credit50": {
+      "hours": 168,
+      "objective_kind": "local",
+      "objective_dkk": 3575797.916102171,
+      "solver_status": 0,
+      "mip_gap": 0.0,
+      "mip_dual_bound_dkk": 3575797.916102171,
+      "variables": 2352,
+      "constraints": 5203,
+      "max_constraint_violation": 5.080380560684716e-12,
+      "ptes_charge_mwh": 1500.2356765051672,
+      "ptes_discharge_mwh": 1473.0,
+      "ptes_equivalent_cycles": 0.44636363636363635,
+      "ptes_terminal_mwh": 1500.0,
+      "runtime": {
+        "python": "3.12.14",
+        "numpy": "2.3.5",
+        "pandas": "2.2.3",
+        "scipy": "1.17.0"
+      },
+      "input_provenance": {
+        "kind": "prepared_inputs",
+        "sha256": "1609049b63f5d91f9bc974dcdc0a414f9ebd5dd928abac71fea4138ab60466af",
+        "schedule_sha256": "931435f03a3a5bdaed6891a3fcd4a0bcd289dc2cbe676c2bdd5673bb01f371d5"
+      },
+      "absolute_optimality_gap_dkk": 0.0
+    },
+    "ci_demo": {
+      "hours": 48,
+      "objective_kind": "system",
+      "objective_dkk": 2055055.359453024,
+      "solver_status": 0,
+      "mip_gap": 8.893853785242276e-05,
+      "mip_dual_bound_dkk": 2054872.5858341488,
+      "variables": 2112,
+      "constraints": 2205,
+      "max_constraint_violation": 8.588880717752545e-10,
+      "ptes_charge_mwh": 448.68522942965956,
+      "ptes_discharge_mwh": 426.9997459610827,
+      "ptes_equivalent_cycles": 0.1293938624124493,
+      "ptes_terminal_mwh": 1500.0,
+      "price_method": "LP regional-balance dual with all integer decisions fixed",
+      "runtime": {
+        "python": "3.12.14",
+        "numpy": "2.3.5",
+        "pandas": "2.2.3",
+        "scipy": "1.17.0"
+      },
+      "input_provenance": {
+        "kind": "synthetic_demo"
+      },
+      "absolute_optimality_gap_dkk": 182.77361887530424
+    },
+    "annual_milp_endogenous": {
+      "case": "annual endogenous-HP MILP",
+      "status": "interrupted_without_accepted_result",
+      "elapsed_wall_s_at_stop": 608.47,
+      "exit_code": 130,
+      "note": "No accepted annual MILP dispatch or price result exported. Solver time limits are not strict process wall limits. Seasonal integer cases and full-year LP passed."
+    },
+    "annual_milp_must_run": {
+      "status": "external_timeout_without_export",
+      "process_budget_s": 90,
+      "exit_code": 124
+    }
+  }
+}

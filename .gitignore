@@ -12,3 +12,15 @@
 *.toc
 main.pdf
 build/
+
+# Generated optimisation inputs, results and Python environments
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+model/data/raw/*
+model/data/processed/*
+model/results/*
+

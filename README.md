@@ -1,83 +1,58 @@
 # Dynamic heat tariffs and PTES operation
 
-## Compile
+Research on dynamic PTES-discharge tariffs at the VEKS–Høje Taastrup boundary.
+This repository contains the working manuscript and a representative Copenhagen
+heat-dispatch optimisation. Numerical model validation and manuscript typesetting
+are separate checks; the current paper results have not been replaced with new
+portfolio-model results.
 
-Open `main.tex` in Overleaf and use **pdfLaTeX**. The bibliography now uses
-**BibTeX**, not Biber. A normal Overleaf Recompile runs the required passes.
-Locally, with TeX Live's `elsarticle` class installed:
+| Location | Contents |
+|---|---|
+| `main.tex`, `sections/`, `figures/` | Working paper, equations and scientific figures |
+| `References.bib`, `preamble.tex` | Bibliography and paper formatting |
+| [model/](model/README.md) | Hourly dispatch optimisation, data pipeline, scenarios and tests |
+| [Model formulation](model/docs/formulation.md) | Constraints, objectives and settlement boundaries |
+| [Data sources](model/docs/data_sources.md) | Public sources, inherited inputs and assumptions |
+| [Validation](model/docs/validation.md) | Executed checks and remaining scientific limits |
+| [Layout record](docs/manuscript_layout.md) | Earlier manuscript-formatting changes and references |
+
+## Run the optimisation
+
+```sh
+cd model
+python -m venv .venv
+. .venv/bin/activate
+pip install -e '.[test]'
+pytest -q
+cph-dispatch demo --hours 168 --prices
+```
+
+See [model/README.md](model/README.md) for public 2024 data preparation, annual
+dispatch, local discharge-credit experiments and reproducibility instructions.
+The default solver is HiGHS through SciPy; no commercial solver is required.
+
+## Compile the paper
+
+Use pdfLaTeX and BibTeX in Overleaf. With TeX Live and `elsarticle` installed:
 
 ```sh
 latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
 ```
 
-The default is Elsevier's two-column `5p` article layout. To prepare a
-single-column review version, change the class options to `[preprint,12pt]`.
-There is no publisher logo, journal name, or claim of acceptance/submission.
-TikZ figure bodies are included directly; shell escape is not needed.
+The default is Elsevier's two-column `5p` layout. Change the class options to
+`[preprint,12pt]` for a single-column review version. TikZ figures do not require
+shell escape. Formatting does not imply acceptance or submission to a journal.
 
-## Layout references
+## Research status
 
-- Schledorn et al. (2022), *Frigg: Soft-linking energy system and demand response
-  models*, Applied Energy 317, 119074. https://doi.org/10.1016/j.apenergy.2022.119074
-- Schledorn et al. (2024), *Frigg 2.0: Integrating price-based demand response into
-  large-scale energy system analysis*, Applied Energy 364, 122960.
-  https://doi.org/10.1016/j.apenergy.2024.122960
-- Dominković et al. (2020), *Implementing flexibility into energy planning models:
-  Soft-linking of a high-level energy planning model and a short-term operational
-  model*, Applied Energy 260, 114292. https://doi.org/10.1016/j.apenergy.2019.114292
-- Dominković et al. (2018), *Influence of different technologies on dynamic pricing
-  in district heating systems: Comparative case studies*, Energy 153, 136–148
-  (already cited in the manuscript).
+The new model optimises a fixed Copenhagen producer portfolio, regional storage
+and local HTF/PTES operation. It includes an explicit discharge-service settlement
+and a rational local-response experiment. It does not yet complete the proposed
+behavioural response, upstream corrective redispatch, deviation penalty and tariff
+evaluation loop. Demand-metering boundaries, plant availability, cost assumptions,
+waste treatment and local settlement/pumping allocation need empirical validation
+before interpreting the scenarios as a historical reconstruction or final tariff.
 
-These are presentation references: numbered section hierarchy, compact equations
-with prose definitions, grouped constraints, nomenclature, and simple table rules.
-No text or numerical findings from those papers have been copied.
-
-## Formatting and notation changes
-
-- Replace the report cover and contents with article front matter; retain authors.
-- Move the existing abstract to `sections/00_Abstract.tex`.
-- Add nomenclature and label each equation group and constituent constraint.
-- Use upright descriptive subscripts/superscripts and a shared heat-pump index.
-- Make the hourly duration explicit: powers are integrated using `Delta t = 1 h`;
-  start-up charges are per event. This does not change the hourly numerical model.
-- State valid initial/ramping/switching index domains: no references beyond the
-  final period, and ramp differences start at the second operating period.
-- Use one consistent biomass fossil-emission-factor symbol in equation and prose.
-- Move the existing detailed COP calculation and assumptions to Appendix A.
-- Relabel the existing optimization objective consistently as local operating
-  expenditure in the results table and discussion.
-- Keep the five-step future workflow; identify it as a proposed extension.
-- Preserve loose discussion notes in the uncompiled `sections/00_notes.tex`.
-- Remove a duplicate bibliography key and supply three previously missing entries.
-- Simplify the workflow figure to straight borders and labelled arrows, and
-  correct its producer label to match the single biomass CHP
-  proxy currently described in the methodology (waste incineration is not yet
-  modelled in this manuscript formulation).
-
-## Scientific work still open
-
-This is a formatted working manuscript, not a completed submission. The current
-introduction focuses on a **PTES-discharge tariff**, while the existing operational
-formulation still purchases external heat for direct supply and charging.
-The discharge tariff, pumping costs, retention value, and its settlement boundary
-must therefore be made explicit and reconciled with the model and final results.
-The Copenhagen supply-portfolio extension has not been implemented by this edit.
-
-Numerical results are retained from the source manuscript and have not been
-recomputed or validated against model code. The fixed-tariff charging/discharging
-hours, annual horizon, and comparison metrics need checking before publication.
-Behavioural response and the five-step feedback loop remain future work.
-The source conclusion/acknowledgements are empty and are not printed until written.
-The abstract still needs final results after the analysis is complete.
-
-The newly resolved PlanEnergi project reference documents the installation;
-the exact annual compensation and contractual allocation still require a primary
-contract or stakeholder record. Institutional descriptions have not been fact
-audited as part of the layout edit.
-
-## Layout validation
-
-The final pdfLaTeX/BibTeX build passes with no undefined references or citations,
-no duplicate bibliography keys, and no overfull boxes. All 14 rendered pages were
-visually reviewed. This validates typesetting, not the numerical model.
+The existing manuscript's scope, equations and results must be reconciled with the
+validated extension before submission. Historical model code remains archived in
+`TomKae00/DynSys-PTES`; its pinned input provenance is recorded in `model/data/legacy/`.
