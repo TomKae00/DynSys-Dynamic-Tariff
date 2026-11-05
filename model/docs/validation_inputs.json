@@ -6,24 +6,24 @@
   "sources": {
     "varmelast": {
       "url": "https://www.varmelast.dk/api/v1/heatdata/historical?from=2024-01-01&to=2024-12-31&intervalMinutes=60&contextSite=varmelast_dk",
-      "retrieved_utc": "2026-11-03T07:06:49.655855+00:00",
+      "retrieved_utc": "2026-11-05T21:41:24.820517+00:00",
       "sha256": "6cdc62904ff3d82e4c44da01246103c5106859c8847153f858a7d72bf9567c0a",
       "bytes": 9778827
     },
     "dk2": {
       "url": "https://api.energidataservice.dk/dataset/Elspotprices?start=2023-12-30&end=2025-01-02&filter=%7B%22PriceArea%22%3A+%5B%22DK2%22%5D%7D&limit=10000",
-      "retrieved_utc": "2026-11-03T07:06:57.410934+00:00",
+      "retrieved_utc": "2026-11-05T21:41:30.694252+00:00",
       "sha256": "be23fef944ab3dad400bfc6d74936fc94834aa7606f9e1525b26c75e03bc1907",
       "bytes": 1187618
     },
     "monthly_reference_2024.csv": {
       "sha256": "61df200a01931eb070394ae386ebe66bd32d21f7dadf5d9f1cbea3996beba20f"
     },
-    "provenance.json": {
-      "sha256": "b163dbe1cab044d49f05826445590ca55345cb26277a2595c0de248adb3d32e3"
-    },
     "cop_2024.csv": {
       "sha256": "a9754554bbc3be73e1939feeaa4eac5c2334de4ec2c783fd0b1097ec02a9b124"
+    },
+    "provenance.json": {
+      "sha256": "b163dbe1cab044d49f05826445590ca55345cb26277a2595c0de248adb3d32e3"
     },
     "htf_demand_2019.csv": {
       "sha256": "c9c503184d33d15b18fbe013520ac0c11c6e5c420113a8b7a6ecf1152ac02166"

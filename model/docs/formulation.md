@@ -1,158 +1,159 @@
-# Model formulation and interpretation
+# PyPSA formulation and coupling assumptions
 
-All snapshots are one hour. Powers are MW, inventories MWh, prices DKK/MWh and
-the objective DKK. Capacities are fixed: there is no investment optimisation.
-All producer and storage decisions are optimised, apart from measured waste heat
-being used as an **availability ceiling**, not a prescribed dispatch schedule.
+The network uses hourly snapshots, MW powers, MWh inventories and DKK costs.
+Capacities are fixed. Production and storage are optimised with perfect foresight
+for the chosen horizon. This is an operational benchmark, not an investment model
+or a reconstruction of Varmelast's forecast/announcement process.
 
-## Heat boundaries
+## Native components and heat boundaries
 
-Let `R` denote regional demand, `L` local HTF demand, `H` direct heat through
-the heat exchanger, `C,D` PTES charging/discharging and `Q_hp` local HP heat.
-The local balance is
-
-\[
-H_t+D_t+\sum_j Q_{j,t}^{hp}=L_t.
-\]
-
-The provisional default assumes regional demand includes local gross demand at
-a comparable delivered-heat boundary. Consequently the upstream balance is
-
-\[
-\sum_i Q_{i,t}+Q_t^{waste}+Q_t^{boilers}+Q_t^{hp,up}
-+\sum_s(D_{s,t}-C_{s,t})
-=\frac{R_t-L_t+H_t+C_t}{1-\ell}.
-\]
-
-`network_loss_fraction = 0.02` is a scenario parameter. It is not established that
-the public consumption series has this metering boundary. If it instead reports
-net transmission withdrawals, subtracting local gross demand is invalid: obtain
-historical HTF withdrawal/production data before using it as an empirical benchmark.
-That interpretation is rejected by the code. The alternate explicit
-`residual_excluding_htf` mode uses `R` directly as residual demand. Negative
-residuals are errors, never clipped. CTR and VEKS remain separate input columns,
-but share one uncongested upstream node in this first model.
+Copenhagen and HTF have separate heat buses. Fuel generators supply CHP/boiler fuel
+buses; conversion links deliver heat and electricity. One signed electricity-market
+generator buys/sells at externally supplied DK2 prices. HPs consume electricity
+through COP-dependent links. Stores have separate charge/discharge links.
 
 ```mermaid
 flowchart TD
-    CHP["AMV1 / AMV4 / AVV1 / AVV2 / KKV8"] --> U["Aggregate Copenhagen heat node"]
-    W["Waste fleet: ARC / ARGO / VF"] --> U
-    B["Peak boilers and regional HPs"] --> U
-    U <--> A["AMV and AVV accumulators"]
-    U --> R["Other regional demand"]
-    U --> H["Direct HTF heat exchanger"]
-    U --> S["HTF PTES"]
-    H --> L["HTF demand"]
+    G["CHPs, waste, boilers and regional HPs"] --> C["Copenhagen heat bus"]
+    C <--> A["AMV and AVV accumulators"]
+    C --> R["Other regional demand"]
+    C --> H["HTF heat exchanger"]
+    C --> S["HTF PTES"]
+    H --> L["HTF heat demand"]
     S --> L
-    P["City2 and groundwater HPs"] --> L
+    P["Local HPs"] --> L
 ```
 
-Electricity coupling enters through CHP exports and HP/electric-boiler imports
-valued at exogenous hourly DK2 prices. No electricity-market clearing is modelled.
+Let R be CTR+VEKS demand, L local HTF demand, H direct supply, C delivered charging
+heat and D delivered discharge. The local balance is H+D+sum(Q_HP)=L. The provisional
+gross-demand boundary uses other regional demand R-L. Negative residuals are errors.
+The alternate residual_excluding_htf setting uses R directly as the other demand.
+A net-withdrawal interpretation is rejected without historical local withdrawal data.
 
-## Producers
+With delivery factor r=1-network_loss_fraction, upstream production plus regional
+storage discharge minus charging equals (R-L+H+C)/r. Native HX and PTES charger links
+apply r; the residual regional load is divided by r. Regional accumulators attach to
+the production bus. Thus CSV H/C are delivered MW, while their upstream link p0
+values are H/r and C/r. The 2% default is a scenario, not calibrated network losses.
+CTR and VEKS inputs are retained individually but share one uncongested heat area.
 
-Backpressure/bypass units use a common fuel input `F` and heat-only bypass `B`:
+## CHP representation and bypass correction
 
-\[
-Q=P/C_m+B,\qquad F=P/\eta_{el}+B/\eta_{bypass}.
-\]
+Backpressure units AMV1, AMV4 and KKV8 have a multi-output link with P=eta_el*F_bp
+and Q_bp=P/Cm. A heat-only bypass link uses Q_b=eta_bypass*F_b. The common fuel
+supply imposes F_bp+F_b <= available fuel capacity; total heat also has a capacity
+bound. The bypass_mw input denotes EXTRA heat capacity in heat-only operation.
+The full heat-only limit is therefore heat_mw+bypass_mw. It is not bypass_mw alone.
+The former direct implementation imposed the latter limit and underrepresented
+this operating mode. For AMV4, the full un-derated heat-only design point is
+550 MW heat from 487 MW fuel. A dedicated test verifies this point and shared fuel.
 
-Heat, electricity, bypass and fuel each have fixed capacity/availability bounds.
-The same fuel capacity is shared by power production and bypass, preventing their
-capacities from being added as independent plants. Efficiencies are derived from
-the tabulated design points. LHV heat efficiencies above one include condensation.
+For extraction units AVV1/AVV2, two fuel-allocation links implement
+F=(P+Cv*Q)/eta_cond, with P>=Cm*Q and heat, electricity and fuel capacity bounds.
+The heat link's eta_cond/Cv coefficient is an opportunity-cost coefficient; it
+must not be interpreted in isolation as a standalone boiler efficiency. Positive
+fuel prices put efficient dispatch on this frontier, matching the former inequality
+region at an optimum. Negative CHP fuel prices are rejected because they need an
+explicit formulation for inefficient fuel disposal. Alternative AVV2 equipment modes
+are not added as independent capacity. Availability derating remains a scenario.
 
-Extraction units AVV1 and AVV2 use a convex production region:
+CHP starts, minimum loads and ramps remain omitted. Electricity prices are exogenous;
+CHP exports do not clear or change the electricity market.
 
-\[
-P+C_v Q\leq\eta_{cond}F,\qquad P\geq C_m Q.
-\]
+## Waste, boilers and regional storage
 
-AVV2 gas-turbine/straw operating modes are not added as separate independent
-capacity. Continuous availability derating (0.9 by default) is a scenario, not a
-reconstructed outage schedule. CHP minimum loads, starts, ramps and individual
-contract bids are omitted in this initial approximation. Thus this is not a
-unit-commitment reconstruction of historical dispatch.
+The aggregate waste fleet has a 519.5 MW heat-capacity ceiling and hourly output
+bounded by observed aggregate waste output, treated as availability. Its electricity
+output is 0.25 times heat. This does not enforce must-take waste contracts or actual
+plant-level throughput. Unused availability is reported. Peak boiler fuel options
+share an aggregate heat-capacity ceiling; individual dual-fuel boiler sites are not
+resolved. Regional HP capacity/COP and all financial adders remain scenario inputs.
 
-Waste sites are represented by one fleet, with 519.5 MW nominal heat capacity.
-Hourly output is bounded by the public aggregate waste profile and that capacity.
-Electricity is approximated as 0.25 times waste heat. This gives a dispatchable
-upper-envelope approximation; it does not enforce waste throughput/must-take
-contracts. Report the unused availability and test this simplification before
-interpreting summer prices. Site names/capacities explain the fleet; no fictional
-historical plant-level dispatch is inferred from the aggregate profile.
+AMV and AVV stores have fixed power/energy limits, standing losses and equal initial/
+final inventories. Their continuous charge/discharge flows share converter capacity;
+simultaneous operation remains an explicit relaxation and is reported.
 
-Peak boiler fuel alternatives share an aggregate heat-capacity ceiling, preventing
-the total dual-fuel capacity from being counted twice at system level. This remains
-coarser than individual boiler fuel-sharing constraints. Fuel efficiency, variable
-cost and grid adders are scenario inputs. Regional HP capacity/COP are assumptions.
+## PTES and local HP operation
 
-## Storage and local heat pumps
+The common inventory equation is E_t=(1-lambda)E_(t-1)+eta_c*C_t-D_t/eta_d.
+Initial and terminal energies are fixed. In PyPSA 1.0.4, native Store initialisation
+inserts e_initial without first-hour decay. An explicit first-hour load on each
+inventory bus accounts for lambda*E_initial; later losses use native standing_loss.
+This keeps e_initial equal to the physical pre-loss inventory and preserves the
+same first-hour equation as the previous direct formulation.
 
-For every store, end-of-hour inventory satisfies
+Default PTES settings are 3300 MWh, symmetric 23 MW power, 10/5 MW minimum charge/
+discharge, 12 MW/h ramps from initially idle operation, no simultaneous operation
+and two following hours without reversal. Power is delivered heat. A 30 MW scenario
+and asymmetric actual charge/discharge ratings require validation. No cyclic mode
+or ramp connection is imposed across the year boundary. Final flow is free but
+final inventory is fixed. HX direct flow has a 0.5 MW minimum; H+C<=100 MW is an
+assumed shared connection. The 12-hour full-charge/full-discharge restriction is
+not implemented. Loss 0.000275/h and zero pumping are provisional assumptions.
 
-\[
-E_t=(1-\lambda)E_{t-1}+\eta_c C_t-D_t/\eta_d.
-\]
+Native committable HP links use hourly COP, 25% minimum load, two-hour minimum up/
+down times, startup costs and an initially off state. Electrical link p_max_pu is
+adjusted with COP so thermal output never exceeds its rating. Custom constraints
+make transitions exact and forbid starts/stops that cannot complete their minimum
+duration by the horizon end. The must_run option instead fixes full thermal output
+and assumes the units were already running, with no startup event in the horizon.
+A real must-run/availability profile is not inferred from that full-output scenario.
 
-Each has a fixed initial and terminal inventory, including regional accumulators.
-The PTES defaults to 3300 MWh and an effective 23 MW charge/discharge scenario;
-30 MW is a required design-capacity sensitivity. Separate binary modes enforce
-10 MW minimum charging, 5 MW minimum discharging, no simultaneous flows, 12 MW/h
-ramps and no reversal in the next two hours. Initial flow is assumed zero; ramps
-apply from that point. No cyclic mode/ramp connection across the year boundary is
-assumed. The horizon ends with free final flow but fixed energy, so test endpoint
-effects. `H+C <= 100 MW` is an assumed shared HTF connection; `H >= 0.5 MW` is
-an aggregate warm-keeping approximation, not a surveyed network constraint.
+## Objectives and one-pass coupling
 
-Regional accumulators use continuous flow variables and `C+D <= power capacity`.
-Their simultaneous charging/discharging is a relaxation and must be reported.
-The default hourly PTES loss 0.000275 is provisional; it is not a fitted result.
-Pumping defaults to zero because a verified coefficient is missing; sensitivity
-values must be explicitly identified as assumptions, not measured pumping energy.
+The coordinated objective sums fuel, variable O&M, electricity purchases and local
+HP starts, less electricity sales. Scenario electricity adders are included.
+This is net operating expenditure, not a calibrated societal-welfare measure.
+Heat payments and credits are internal transfers and do not enter this objective.
+Negative objectives can include condensing-power profits, not negative heat tariffs.
 
-Each local HP obeys `0 <= Q <= thermal_capacity` and `P_el = Q/COP_t`; changing COP
-cannot increase its thermal output ceiling. Binary HP modes implement 25% minimum
-load, two-hour minimum up/down times, startup costs and an initially off condition.
-Starts/stops too close to the end to fulfil their duration are forbidden. No
-unverified compressor electrical rating is invented. `heat_pumps.policy: must_run`
-instead enforces full thermal output, for comparison with stakeholder practice.
+The discharge-service HTF objective sums tau*H+(tau-delta)*D, local HP electricity,
+discharge pumping and HP startup costs. Charging heat and charge pumping belong to
+the upstream boundary. The monthly reference tariff tau and candidate credit delta
+require contractual/methodological validation. The optional legacy_owned_store
+boundary instead bills tau*(H+C)-delta*D and allocates both pumping flows locally;
+it is not used by the coupled comparison.
 
-## Objectives and settlements
+The default local response imposes 0<=C<=C_announced with the same inventory endpoints.
+Here charging is a feasibility variable within an assumed upstream availability
+ceiling, not a claim that HTF controls central charging. Lower discharge can be
+accompanied by lower charging, avoiding nearly fixed throughput. A separate fixed
+policy imposes C=C_announced and retains the old restricted experiment.
 
-The coordinated objective minimises fuel costs, variable O&M, electricity imports
-and starts, less electricity sales. It includes scenario fiscal/grid adders. It is
-**net operating expenditure**, not a pure social resource-cost or welfare measure.
-Heat payments and tariff credits are transfers and do not enter this objective.
-Negative net heat cost can arise when electricity revenue offsets operating costs.
+Corrective system dispatch fixes the local H, D and both local HP heat outputs. It
+chooses production, regional storage and compatible C<=C_announced with all physical
+constraints and common inventory endpoints. Its PTES charging/inventory trajectory
+is authoritative. The local trajectory was a feasibility witness; it need not be
+the final upstream charging schedule. This assumes upstream charging can be curtailed
+within its announced slots. Costs and curtailed charging are reported, rather than
+assuming the adjustment is free. No charging outside those slots is introduced.
 
-Under the default `discharge_service` local settlement, the HTF objective is
+compare runs central dispatch once, then reference and candidate local/corrective
+pairs. It reports corrective system operating-cost differences, HTF bills and supplier
+local heat revenue separately, with absolute solver gap bounds. Reference and
+candidate share the same inputs, schedule, constraints and endpoints. Revenue is
+not supplier profit. With zero pumping and equal tariffs, local operation can be
+indifferent; a selected optimum is not observed behaviour. The current implementation
+is a rational one-pass benchmark, not a behavioural equilibrium or tariff derivation.
+Deviation charges, electricity imbalance settlement, terminal-value alternatives,
+rolling forecasts and repeated feedback remain research tasks.
+Corrective electricity purchases and sales use the same exogenous DK2 prices as
+central scheduling; the cost difference is not actual balancing-market settlement.
 
-\[
-\min\sum_t [\tau_t H_t+(\tau_t-\delta_t)D_t
-+(\pi_t+a)(P_t^{hp}+P_t^{pump,dis})]+\text{HP startup costs}.
-\]
+## Prices, export and reproducibility
 
-Charging follows an explicitly supplied central schedule, with the same inventory
-endpoints. HTF does not buy charging heat in this boundary. Direct delivery retains
-the monthly reference tariff; the discharge discount `delta` is the experiment
-parameter. Supplier local heat revenue is the corresponding heat payment minus
-the discharge credit; it is not supplier profit. Contracts and pumping allocation
-still need confirmation. The optional `legacy_owned_store` mode instead bills
-`tau*(H+C)-delta*D` and allocates both storage pumping flows locally. Results from
-these settlement boundaries must not be pooled.
+--prices rebuilds a continuous PyPSA/Linopy model with every accepted commitment
+and PTES mode fixed. Bus duals are conditional marginal operating values; they
+exclude the cost of changing commitment. A demand perturbation at the delivered
+boundary has derivative upstream_bus_dual/r, verified by a finite-difference test.
+Raw MILP duals are not reported. Conditional LP bus prices are stored in the exported
+network and upstream values in the CSV. LP relaxations are labelled explicitly.
 
-The local problem does not include upstream redispatch after a deviation. It is
-therefore an intermediate response benchmark, not completion of the paper's five
-step soft-coupling workflow. Deviation penalties, behavioural preferences, iterative
-feedback and a justified tariff formula remain future work.
+PyPSA snapshots are timezone-naive UTC; CSV timestamps remain timezone-aware UTC.
+The network metadata records this convention, scenario, runtime and input hashes.
+Custom PTES statuses are recorded on the links' status table and CSV. Native network
+exports preserve component data and results, not custom constraints. Re-solving
+requires this builder and its constraint callback, or a separately saved Linopy model.
 
-## Marginal values
-
-`--prices` first solves dispatch, then fixes every integer decision and resolves a
-continuous LP. Regional heat-balance duals are conditional upstream values. They
-exclude the cost of changing commitment and are not automatically an implementable
-tariff. With delivered demand and the above loss convention, the demand derivative
-is the upstream dual divided by `1-ell`. A finite-difference test checks this sign
-and scaling. Raw MILP duals are never used as prices.
+Implementation references: [PyPSA custom constraints](https://docs.pypsa.org/v1.0.4/user-guide/optimization/custom-constraints/)
+and [storage](https://docs.pypsa.org/v1.0.4/user-guide/optimization/storage/).

@@ -1,4 +1,4 @@
-"""Sparse linear/MILP formulation; SciPy's bundled HiGHS needs no commercial licence."""
+"""PyPSA networks for coordinated Copenhagen dispatch and local HTF response."""
 
 from copy import deepcopy
 from dataclasses import dataclass
@@ -6,53 +6,10 @@ from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
-from scipy.optimize import Bounds, LinearConstraint, linprog, milp
-from scipy.sparse import coo_matrix, vstack
+import pypsa
+import xarray as xr
 
-
-class LinearModel:
-    def __init__(self, hours):
-        self.hours = hours
-        self.variables = {}
-        self.cost, self.lower, self.upper, self.integer = [], [], [], []
-        self.row, self.col, self.data = [], [], []
-        self.row_lower, self.row_upper, self.row_names = [], [], []
-
-    def variable(self, name, *, lower=0, upper=np.inf, cost=0, integer=False):
-        if name in self.variables:
-            raise ValueError(f"Duplicate variable {name}")
-        indices = np.arange(len(self.cost), len(self.cost) + self.hours)
-        self.variables[name] = indices
-        for target, value in [
-            (self.cost, cost),
-            (self.lower, lower),
-            (self.upper, upper),
-            (self.integer, int(integer)),
-        ]:
-            target.extend(np.broadcast_to(value, self.hours).tolist())
-        return indices
-
-    def constraint(self, name, terms, *, lower=-np.inf, upper=np.inf):
-        size = len(terms[0][0])
-        rows = np.arange(len(self.row_lower), len(self.row_lower) + size)
-        for indices, coefficient in terms:
-            if len(indices) != size:
-                raise ValueError(f"Misaligned constraint {name}")
-            self.row.extend(rows)
-            self.col.extend(indices)
-            self.data.extend(np.broadcast_to(coefficient, size))
-        self.row_lower.extend(np.broadcast_to(lower, size))
-        self.row_upper.extend(np.broadcast_to(upper, size))
-        self.row_names.extend([name] * size)
-        return rows
-
-    def equality(self, name, terms, rhs):
-        return self.constraint(name, terms, lower=rhs, upper=rhs)
-
-    def matrix(self):
-        return coo_matrix(
-            (self.data, (self.row, self.col)), shape=(len(self.row_lower), len(self.cost))
-        ).tocsc()
+from .results import collect, summarise
 
 
 def validate_inputs(frame, config, plants):
@@ -81,20 +38,26 @@ def validate_inputs(frame, config, plants):
         raise ValueError("Objective must be system or local")
     if config["settlement_boundary"] not in ("discharge_service", "legacy_owned_store"):
         raise ValueError("Unknown settlement boundary")
+    if config.get("response", {}).get("charging_policy", "curtailable") not in (
+        "fixed",
+        "curtailable",
+    ):
+        raise ValueError("Charging policy must be fixed or curtailable")
     if config["objective"] == "local" and config["settlement_boundary"] == "discharge_service":
         if (
             "scheduled_ptes_charge_mw" not in frame
             or not np.isfinite(frame.scheduled_ptes_charge_mw).all()
+            or (frame.scheduled_ptes_charge_mw < -1e-7).any()
         ):
             raise ValueError(
-                "Discharge-service response needs a complete central charging schedule"
+                "Discharge-service response needs a complete nonnegative charging schedule"
             )
     if not 0 <= config["network_loss_fraction"] < 1:
         raise ValueError("Network loss fraction must be in [0,1)")
-    for group in [config["ptes"], *config["upstream"]["accumulators"].values()]:
-        if group["energy_mwh"] <= 0 or group["power_mw"] <= 0:
+    for spec in [config["ptes"], *config["upstream"]["accumulators"].values()]:
+        if spec["energy_mwh"] <= 0 or spec["power_mw"] <= 0:
             raise ValueError("Storage capacities must be positive")
-        if not 0 <= group["loss_per_hour"] < 1:
+        if not 0 <= spec["loss_per_hour"] < 1:
             raise ValueError("Storage hourly loss must be in [0,1)")
     ptes = config["ptes"]
     if not all(0 <= ptes[k] <= ptes["energy_mwh"] for k in ["initial_mwh", "terminal_mwh"]):
@@ -107,527 +70,599 @@ def validate_inputs(frame, config, plants):
         raise ValueError("Plant names must be unique and kinds explicitly supported")
     if ((plants.availability < 0) | (plants.availability > 1)).any():
         raise ValueError("Availability factors must be in [0,1]")
+    if (plants.fuel_dkk_mwh < 0).any():
+        raise ValueError("Negative CHP fuel prices need an explicit fuel-disposal formulation")
+    if (plants.loc[plants.kind == "extraction", "cv"] <= 0).any():
+        raise ValueError("Extraction CHP requires a positive Cv")
 
 
-def add_storage(model, name, settings, *, terminal, initial):
-    charge = model.variable(name + "_charge_mw", upper=settings["power_mw"])
-    discharge = model.variable(name + "_discharge_mw", upper=settings["power_mw"])
-    energy = model.variable(name + "_energy_mwh", upper=settings["energy_mwh"])
-    retention = 1 - settings["loss_per_hour"]
-    ec = settings.get("charge_efficiency", 1.0)
-    ed = settings.get("discharge_efficiency", 1.0)
-    model.equality(
-        name + "_initial",
-        [(energy[:1], 1), (charge[:1], -ec), (discharge[:1], 1 / ed)],
-        retention * initial,
+def _initial_loss(n, name, bus, initial, loss):
+    # PyPSA 1.0.4's Store balance inserts e_initial without first-hour decay.
+    # This explicit inventory-bus load gives E_0 the same start-of-hour meaning
+    # as every later E_(t-1), while preserving the native e_initial value.
+    if initial * loss:
+        values = pd.Series(0.0, index=n.snapshots)
+        values.iloc[0] = initial * loss
+        n.add("Load", name + "_initial_loss", bus=bus, p_set=values)
+
+
+def _storage(n, name, spec, heat_bus, *, initial):
+    store_bus = name + "_inventory"
+    n.add("Bus", store_bus, carrier="heat")
+    n.add(
+        "Store",
+        name,
+        bus=store_bus,
+        e_nom=spec["energy_mwh"],
+        e_initial=initial,
+        standing_loss=spec["loss_per_hour"],
+        carrier="heat",
     )
-    model.equality(
-        name + "_balance",
-        [(energy[1:], 1), (energy[:-1], -retention), (charge[1:], -ec), (discharge[1:], 1 / ed)],
-        0,
+    _initial_loss(n, name, store_bus, initial, spec["loss_per_hour"])
+    n.add(
+        "Link",
+        name + "_charge",
+        bus0=heat_bus,
+        bus1=store_bus,
+        p_nom=spec["power_mw"],
+        efficiency=1.0,
+        carrier="heat",
     )
-    model.equality(name + "_terminal", [(energy[-1:], 1)], terminal)
-    return charge, discharge, energy
+    n.add(
+        "Link",
+        name + "_discharge",
+        bus0=store_bus,
+        bus1=heat_bus,
+        p_nom=spec["power_mw"],
+        efficiency=1.0,
+        carrier="heat",
+    )
 
 
-def add_heat_pump(model, name, capacity, cop, price, settings, *, integer):
-    q = model.variable(name + "_heat_mw", upper=capacity, cost=price / cop)
-    policy = settings.get("policy", "endogenous")
-    if policy == "must_run":
-        model.equality(name + "_must_run", [(q, 1)], capacity)
-        return q
-    if policy != "endogenous":
-        raise ValueError("Heat pump policy must be endogenous or must_run")
-    on = model.variable(name + "_on", upper=1, integer=integer)
-    start = model.variable(
-        name + "_start", upper=1, integer=integer, cost=capacity * settings["startup_dkk_per_mw"]
-    )
-    stop = model.variable(name + "_stop", upper=1, integer=integer)
-    model.constraint(name + "_maximum", [(q, 1), (on, -capacity)], upper=0)
-    model.constraint(
-        name + "_minimum", [(q, 1), (on, -capacity * settings["minimum_fraction"])], lower=0
-    )
-    model.equality(name + "_initial_off", [(on[:1], 1), (start[:1], -1), (stop[:1], 1)], 0)
-    model.equality(
-        name + "_transition", [(on[1:], 1), (on[:-1], -1), (start[1:], -1), (stop[1:], 1)], 0
-    )
-    model.constraint(name + "_one_transition", [(start, 1), (stop, 1)], upper=1)
-    for event, duration, sign in [
-        (start, settings["minimum_up_hours"], 1),
-        (stop, settings["minimum_down_hours"], -1),
-    ]:
-        for lag in range(duration):
-            count = len(q) - lag
-            if count <= 0:
-                continue
-            model.constraint(
-                name + f"_duration_{sign}_{lag}",
-                [(event[:count], 1), (on[lag:], -sign)],
-                upper=0 if sign == 1 else 1,
-            )
-        # Forbid transitions whose minimum duration extends beyond the horizon.
-        if duration > 1:
-            model.equality(name + f"_end_transition_{sign}", [(event[-(duration - 1) :], 1)], 0)
-    return q
-
-
-def build(frame, config, plants):
+def build(frame, config, plants, *, fixed_local=None):
+    """Return a real PyPSA Network; its timezone-naive snapshots explicitly denote UTC."""
     config = deepcopy(config)
     validate_inputs(frame, config, plants)
-    n = len(frame)
-    model = LinearModel(n)
-    integer = config["integer_operation"]
+    n = pypsa.Network()
+    n.set_snapshots(frame.index.tz_convert("UTC").tz_localize(None).rename("snapshot"))
+    n._cph_inputs, n._cph_config, n._cph_plants = frame.copy(), config, plants.copy()
+    n._cph_fixed_local = fixed_local
+    if fixed_local is not None:
+        cols = ["hx_mw", "ptes_discharge_mw", "city2_heat_mw", "groundwater_heat_mw"]
+        if (
+            not fixed_local.index.equals(frame.index)
+            or not np.isfinite(fixed_local[cols]).all().all()
+        ):
+            raise ValueError("Corrective dispatch needs an exactly aligned complete local result")
+        if "scheduled_ptes_charge_mw" not in frame:
+            raise ValueError("Corrective dispatch needs the announced charging schedule")
+    n.meta = {
+        "workflow": "cph_dispatch_pypsa",
+        "snapshot_timezone": "UTC",
+        "config": config,
+        "custom_constraints_require_rebuild": True,
+        "storage_initial_loss": "Explicit first-hour inventory-bus load; initial inventory is before losses",
+    }
+    d = frame.copy()
+    d.index = n.snapshots
     system = config["objective"] == "system"
-    price = frame.electricity_dkk_mwh.to_numpy()
-    tariff = frame.reference_tariff_dkk_mwh.to_numpy()
-    discount = (
-        frame.discharge_discount_dkk_mwh.to_numpy()
-        if "discharge_discount_dkk_mwh" in frame
-        else np.full(n, config["discharge_discount_dkk_mwh"])
+    owned = config["settlement_boundary"] == "legacy_owned_store"
+    delivery = 1 - config["network_loss_fraction"] if system else 1.0
+    n._cph_delivery = delivery
+    for carrier in ["heat", "electricity", "fuel", "waste"]:
+        n.add("Carrier", carrier)
+    for name, carrier in [
+        ("heat_cph", "heat"),
+        ("heat_htf", "heat"),
+        ("electricity", "electricity"),
+        ("ptes_inventory", "heat"),
+    ]:
+        n.add("Bus", name, carrier=carrier)
+    # One signed market exchange avoids independent import/export arbitrage variables.
+    exchange_capacity = (
+        float(plants.power_mw.sum())
+        + config["upstream"]["waste_capacity_mw"]
+        + config["upstream"]["electric_mw"]
+        + 1000
     )
-    hx = model.variable(
-        "hx_mw",
-        lower=config["hx"]["minimum_mw"],
-        upper=config["hx"]["capacity_mw"],
-        cost=0 if system else tariff,
+    n.add(
+        "Generator",
+        "electricity_market",
+        bus="electricity",
+        p_nom=exchange_capacity,
+        p_min_pu=-1.0,
+        marginal_cost=d.electricity_dkk_mwh,
+        carrier="electricity",
+    )
+    tariff = d.reference_tariff_dkk_mwh
+    discount = d.get("discharge_discount_dkk_mwh", config["discharge_discount_dkk_mwh"])
+    hx = config["hx"]
+    n.add(
+        "Link",
+        "hx",
+        bus0="heat_cph",
+        bus1="heat_htf",
+        efficiency=delivery,
+        p_nom=hx["capacity_mw"] / delivery,
+        p_min_pu=hx["minimum_mw"] / hx["capacity_mw"],
+        marginal_cost=0 if system else tariff,
+        carrier="heat",
     )
     ptes = config["ptes"]
-    charge, discharge, _energy = add_storage(
-        model, "ptes", ptes, initial=ptes["initial_mwh"], terminal=ptes["terminal_mwh"]
+    n.add(
+        "Store",
+        "ptes",
+        bus="ptes_inventory",
+        e_nom=ptes["energy_mwh"],
+        e_initial=ptes["initial_mwh"],
+        standing_loss=ptes["loss_per_hour"],
+        carrier="heat",
     )
-    pump = ptes["pump_mwh_el_per_mwh_heat"] * (
-        price + config["heat_pumps"]["electricity_adder_dkk_mwh"]
+    _initial_loss(n, "ptes", "ptes_inventory", ptes["initial_mwh"], ptes["loss_per_hour"])
+    adder = config["heat_pumps"]["electricity_adder_dkk_mwh"]
+    pump = ptes["pump_mwh_el_per_mwh_heat"]
+    charge_pumping = system or owned
+    charge_extra = (
+        {"bus2": "electricity", "efficiency2": -pump * delivery} if charge_pumping and pump else {}
     )
-    owned = config["settlement_boundary"] == "legacy_owned_store"
-    if not system and not owned:
-        model.equality(
-            "central_charging_schedule", [(charge, 1)], frame.scheduled_ptes_charge_mw.to_numpy()
-        )
-    # The paper boundary bills direct heat and discharge; charging belongs upstream.
-    # The explicitly named legacy experiment instead purchases charging heat locally.
-    for ids, cost in [
-        (charge, pump if system else (tariff + pump if owned else 0)),
-        (discharge, pump if system else pump - discount + (0 if owned else tariff)),
-    ]:
-        np_cost = np.array(model.cost, dtype=float)
-        np_cost[ids] += cost
-        model.cost = np_cost.tolist()
-    yc = model.variable("ptes_charge_on", upper=1, integer=integer)
-    yd = model.variable("ptes_discharge_on", upper=1, integer=integer)
-    for flow, status, minimum in [
-        (charge, yc, ptes["min_charge_mw"]),
-        (discharge, yd, ptes["min_discharge_mw"]),
-    ]:
-        model.constraint("ptes_mode_max", [(flow, 1), (status, -ptes["power_mw"])], upper=0)
-        model.constraint("ptes_mode_min", [(flow, 1), (status, -minimum)], lower=0)
-        model.constraint(
-            "ptes_ramp",
-            [(flow[1:], 1), (flow[:-1], -1)],
-            lower=-ptes["ramp_mw_h"],
-            upper=ptes["ramp_mw_h"],
-        )
-        model.constraint("ptes_initial_idle_ramp", [(flow[:1], 1)], upper=ptes["ramp_mw_h"])
-    model.constraint("ptes_exclusive", [(yc, 1), (yd, 1)], upper=1)
-    for lag in range(1, ptes["reversal_hours"] + 1):
-        if lag < n:
-            model.constraint("ptes_no_reversal", [(yc[:-lag], 1), (yd[lag:], 1)], upper=1)
-            model.constraint("ptes_no_reversal", [(yd[:-lag], 1), (yc[lag:], 1)], upper=1)
-    model.constraint(
-        "shared_htf_connection", [(hx, 1), (charge, 1)], upper=config["hx"]["capacity_mw"]
+    discharge_extra = (
+        {"bus2": "electricity", "efficiency2": -pump * ptes["discharge_efficiency"]} if pump else {}
+    )
+    n.add(
+        "Link",
+        "ptes_charge",
+        bus0="heat_cph",
+        bus1="ptes_inventory",
+        efficiency=delivery * ptes["charge_efficiency"],
+        p_nom=ptes["power_mw"] / delivery,
+        marginal_cost=delivery
+        * ((pump * adder if charge_pumping else 0) + (tariff if not system and owned else 0)),
+        carrier="heat",
+        **charge_extra,
+    )
+    n.add(
+        "Link",
+        "ptes_discharge",
+        bus0="ptes_inventory",
+        bus1="heat_htf",
+        efficiency=ptes["discharge_efficiency"],
+        p_nom=ptes["power_mw"] / ptes["discharge_efficiency"],
+        marginal_cost=ptes["discharge_efficiency"]
+        * (pump * adder + (0 if system else -discount + (0 if owned else tariff))),
+        carrier="heat",
+        **discharge_extra,
     )
     hp = config["heat_pumps"]
-    local_terms = [(hx, 1), (discharge, 1)]
     for name in ["city2", "groundwater"]:
         spec = hp[name]
-        q = add_heat_pump(
-            model,
+        cop = d[spec["cop_column"]]
+        electrical_nominal = spec["capacity_mw"] / float(cop.min())
+        maximum = spec["capacity_mw"] / (electrical_nominal * cop)
+        committed = hp.get("policy", "endogenous") == "endogenous"
+        if hp.get("policy", "endogenous") not in ("endogenous", "must_run"):
+            raise ValueError("Heat pump policy must be endogenous or must_run")
+        commitment = (
+            {
+                "min_up_time": hp["minimum_up_hours"],
+                "min_down_time": hp["minimum_down_hours"],
+                "up_time_before": 0,
+                "down_time_before": hp["minimum_down_hours"],
+                "start_up_cost": spec["capacity_mw"] * hp["startup_dkk_per_mw"],
+            }
+            if committed
+            else {}
+        )
+        n.add(
+            "Link",
             name,
-            spec["capacity_mw"],
-            frame[spec["cop_column"]].to_numpy(),
-            price + hp["electricity_adder_dkk_mwh"],
-            hp,
-            integer=integer,
+            bus0="electricity",
+            bus1="heat_htf",
+            efficiency=cop,
+            p_nom=electrical_nominal,
+            p_max_pu=maximum,
+            p_min_pu=maximum * (hp["minimum_fraction"] if committed else 1.0),
+            committable=committed,
+            marginal_cost=adder,
+            carrier="heat",
+            **commitment,
         )
-        local_terms.append((q, 1))
-    model.equality("local_heat_balance", local_terms, frame.htf_demand_mw.to_numpy())
-    if system:
-        upstream = config["upstream"]
-        regional = frame.regional_demand_mw.to_numpy()
-        residual = (
-            regional - frame.htf_demand_mw.to_numpy()
-            if config["demand_boundary"] == "assumed_gross_including_htf"
-            else regional
+    n.add("Load", "htf_demand", bus="heat_htf", p_set=d.htf_demand_mw)
+    if not system:
+        n.add(
+            "Generator",
+            "external_heat",
+            bus="heat_cph",
+            p_nom=2 * hx["capacity_mw"] + ptes["power_mw"],
+            marginal_cost=0.0,
+            carrier="heat",
         )
-        if (residual < 0).any():
-            raise ValueError("Regional demand smaller than HTF demand; check boundary, do not clip")
-        loss_multiplier = 1 / (1 - config["network_loss_fraction"])
-        supply = [(hx, -loss_multiplier), (charge, -loss_multiplier)]
-        for plant in plants.itertuples(index=False):
-            a = plant.availability
-            q = model.variable(
-                plant.name + "_heat_mw",
-                upper=(plant.heat_mw + plant.bypass_mw) * a,
-                cost=plant.vom_dkk_mwh_heat,
+        if "efficiency2" in n.links:
+            n.links["efficiency2"] = n.links.efficiency2.fillna(0.0)
+        return n
+    up = config["upstream"]
+    residual = (
+        d.regional_demand_mw - d.htf_demand_mw
+        if config["demand_boundary"] == "assumed_gross_including_htf"
+        else d.regional_demand_mw
+    )
+    if (residual < 0).any():
+        raise ValueError("Regional demand smaller than HTF demand; check boundary, do not clip")
+    n.add("Load", "other_regional_demand", bus="heat_cph", p_set=residual / delivery)
+    for p in plants.itertuples(index=False):
+        fuel_bus = p.name + "_fuel_bus"
+        n.add("Bus", fuel_bus, carrier="fuel")
+        n.add(
+            "Generator",
+            p.name + "_fuel",
+            bus=fuel_bus,
+            p_nom=p.fuel_mw * p.availability,
+            marginal_cost=p.fuel_dkk_mwh,
+            carrier="fuel",
+        )
+        if p.kind == "backpressure":
+            heat_efficiency = p.eta_el / p.cm
+            n.add(
+                "Link",
+                p.name + "_chp",
+                bus0=fuel_bus,
+                bus1="electricity",
+                bus2="heat_cph",
+                p_nom=p.power_mw / p.eta_el * p.availability,
+                efficiency=p.eta_el,
+                efficiency2=heat_efficiency,
+                marginal_cost=heat_efficiency * p.vom_dkk_mwh_heat,
+                carrier="heat",
             )
-            p = model.variable(plant.name + "_power_mw", upper=plant.power_mw * a, cost=-price)
-            fuel = model.variable(
-                plant.name + "_fuel_mw", upper=plant.fuel_mw * a, cost=plant.fuel_dkk_mwh
+            if p.bypass_mw:
+                # The field is EXTRA heat capacity, not the entire heat-only output.
+                n.add(
+                    "Link",
+                    p.name + "_bypass",
+                    bus0=fuel_bus,
+                    bus1="heat_cph",
+                    p_nom=(p.heat_mw + p.bypass_mw) / p.eta_bypass * p.availability,
+                    efficiency=p.eta_bypass,
+                    marginal_cost=p.eta_bypass * p.vom_dkk_mwh_heat,
+                    carrier="heat",
+                )
+        else:
+            # Joint links implement F=(P+Cv*Q)/eta_cond. Their opportunity-cost
+            # heat coefficient is physical only with the backpressure constraint.
+            n.add(
+                "Link",
+                p.name + "_power",
+                bus0=fuel_bus,
+                bus1="electricity",
+                p_nom=p.power_mw / p.eta_el * p.availability,
+                efficiency=p.eta_el,
+                carrier="heat",
             )
-            if plant.kind == "backpressure":
-                bypass = model.variable(plant.name + "_bypass_mw", upper=plant.bypass_mw * a)
-                model.equality(
-                    plant.name + "_heat_region", [(q, 1), (p, -1 / plant.cm), (bypass, -1)], 0
+            heat_efficiency = p.eta_el / p.cv
+            n.add(
+                "Link",
+                p.name + "_heat",
+                bus0=fuel_bus,
+                bus1="heat_cph",
+                p_nom=p.heat_mw / heat_efficiency * p.availability,
+                efficiency=heat_efficiency,
+                marginal_cost=heat_efficiency * p.vom_dkk_mwh_heat,
+                carrier="heat",
+            )
+    for fuel in ["gas", "oil", "bio"]:
+        efficiency = up[fuel + "_efficiency"]
+        bus = fuel + "_supply_bus"
+        n.add("Bus", bus, carrier="fuel")
+        n.add(
+            "Generator",
+            fuel + "_fuel",
+            bus=bus,
+            p_nom=up[fuel + "_mw"] / efficiency,
+            marginal_cost=up[fuel + "_dkk_mwh_fuel"],
+            carrier="fuel",
+        )
+        n.add(
+            "Link",
+            fuel + "_boiler",
+            bus0=bus,
+            bus1="heat_cph",
+            p_nom=up[fuel + "_mw"] / efficiency,
+            efficiency=efficiency,
+            marginal_cost=up["boiler_vom_dkk_mwh"] * efficiency,
+            carrier="heat",
+        )
+    eta = up["electric_efficiency"]
+    n.add(
+        "Link",
+        "electric_boiler",
+        bus0="electricity",
+        bus1="heat_cph",
+        p_nom=up["electric_mw"] / eta,
+        efficiency=eta,
+        marginal_cost=up["electricity_adder_dkk_mwh"] + eta * up["boiler_vom_dkk_mwh"],
+        carrier="heat",
+    )
+    n.add(
+        "Link",
+        "regional_hp",
+        bus0="electricity",
+        bus1="heat_cph",
+        p_nom=up["heat_pump_mw"] / up["heat_pump_cop"],
+        efficiency=up["heat_pump_cop"],
+        marginal_cost=up["electricity_adder_dkk_mwh"],
+        carrier="heat",
+    )
+    if up["waste_policy"] != "observed_upper_bound":
+        raise ValueError("Only observed_upper_bound waste policy is supported")
+    n.add("Bus", "waste_available", carrier="waste")
+    n.add(
+        "Generator",
+        "waste_supply",
+        bus="waste_available",
+        p_nom=up["waste_capacity_mw"],
+        carrier="waste",
+    )
+    n.add(
+        "Link",
+        "waste",
+        bus0="waste_available",
+        bus1="heat_cph",
+        bus2="electricity",
+        efficiency=1.0,
+        efficiency2=up["waste_power_heat_ratio"],
+        p_nom=up["waste_capacity_mw"],
+        p_max_pu=np.minimum(d.waste_available_mw / up["waste_capacity_mw"], 1.0),
+        marginal_cost=up["waste_vom_dkk_mwh_heat"],
+        carrier="heat",
+    )
+    for name, spec in up["accumulators"].items():
+        _storage(n, name, spec, "heat_cph", initial=spec["energy_mwh"] / 2)
+    if "efficiency2" in n.links:
+        n.links["efficiency2"] = n.links.efficiency2.fillna(0.0)
+    return n
+
+
+def _series(n, values):
+    return xr.DataArray(np.asarray(values), coords={"snapshot": n.snapshots}, dims="snapshot")
+
+
+def add_constraints(n, snapshots, *, relax=False, fixed_modes=None):
+    """Add operational rules to the native network's Linopy model."""
+    m, cfg = n.model, n._cph_config
+    link = m["Link-p"]
+    ptes = cfg["ptes"]
+    c = link.sel(name="ptes_charge") * n._cph_delivery
+    d = link.sel(name="ptes_discharge") * ptes["discharge_efficiency"]
+    h = link.sel(name="hx") * n._cph_delivery
+    integer = cfg["integer_operation"] and not relax
+    bounds = {"binary": True} if integer else {"lower": 0.0, "upper": 1.0}
+    yc = m.add_variables(coords=[n.snapshots], name="ptes_charge_on", **bounds)
+    yd = m.add_variables(coords=[n.snapshots], name="ptes_discharge_on", **bounds)
+    for label, flow, status, minimum in [
+        ("charge", c, yc, ptes["min_charge_mw"]),
+        ("discharge", d, yd, ptes["min_discharge_mw"]),
+    ]:
+        m.add_constraints(flow <= ptes["power_mw"] * status, name="ptes_" + label + "_maximum")
+        m.add_constraints(flow >= minimum * status, name="ptes_" + label + "_minimum")
+        m.add_constraints(
+            flow.diff("snapshot") <= ptes["ramp_mw_h"], name="ptes_" + label + "_ramp_up"
+        )
+        m.add_constraints(
+            flow.diff("snapshot") >= -ptes["ramp_mw_h"], name="ptes_" + label + "_ramp_down"
+        )
+        m.add_constraints(
+            flow.isel(snapshot=0) <= ptes["ramp_mw_h"], name="ptes_" + label + "_initial_idle"
+        )
+    m.add_constraints(yc + yd <= 1, name="ptes_exclusive")
+    for lag in range(1, min(ptes["reversal_hours"] + 1, len(snapshots))):
+        for name, a, b in [("cd", yc, yd), ("dc", yd, yc)]:
+            future = b.isel(snapshot=slice(lag, None)).assign_coords(snapshot=n.snapshots[:-lag])
+            m.add_constraints(
+                a.isel(snapshot=slice(None, -lag)) + future <= 1,
+                name=f"ptes_no_reversal_{name}_{lag}",
+            )
+    m.add_constraints(h + c <= cfg["hx"]["capacity_mw"], name="shared_htf_connection")
+    m.add_constraints(
+        m["Store-e"].sel(name="ptes").isel(snapshot=-1) == ptes["terminal_mwh"],
+        name="ptes_terminal",
+    )
+    if cfg["heat_pumps"].get("policy", "endogenous") == "endogenous":
+        on, start, stop = [m[k] for k in ["Link-status", "Link-start_up", "Link-shut_down"]]
+        m.add_constraints(
+            on.isel(snapshot=0) - start.isel(snapshot=0) + stop.isel(snapshot=0) == 0,
+            name="hp_initial_off_transition",
+        )
+        current = n.snapshots[1:]
+        previous = on.isel(snapshot=slice(None, -1)).assign_coords(snapshot=current)
+        m.add_constraints(
+            on.isel(snapshot=slice(1, None))
+            - previous
+            - start.isel(snapshot=slice(1, None))
+            + stop.isel(snapshot=slice(1, None))
+            == 0,
+            name="hp_exact_transition",
+        )
+        m.add_constraints(start + stop <= 1, name="hp_one_transition")
+        for event, duration, label in [
+            (start, cfg["heat_pumps"]["minimum_up_hours"], "start"),
+            (stop, cfg["heat_pumps"]["minimum_down_hours"], "stop"),
+        ]:
+            if duration > 1:
+                m.add_constraints(
+                    event.isel(snapshot=slice(-(duration - 1), None)) == 0, name="hp_end_" + label
                 )
-                model.equality(
-                    plant.name + "_fuel_balance",
-                    [(fuel, 1), (p, -1 / plant.eta_el), (bypass, -1 / plant.eta_bypass)],
-                    0,
-                )
+    response = cfg["objective"] == "local" and cfg["settlement_boundary"] == "discharge_service"
+    if response or n._cph_fixed_local is not None:
+        planned = _series(n, n._cph_inputs.scheduled_ptes_charge_mw)
+        if cfg.get("response", {}).get("charging_policy", "curtailable") == "fixed":
+            m.add_constraints(c == planned, name="fixed_central_charging")
+        else:
+            m.add_constraints(c <= planned, name="announced_charging_availability")
+    if cfg["objective"] == "system":
+        peak = sum(
+            link.sel(name=f + "_boiler") * cfg["upstream"][f + "_efficiency"]
+            for f in ["gas", "oil", "bio", "electric"]
+        )
+        m.add_constraints(peak <= cfg["upstream"]["shared_peak_mw"], name="shared_peak_capacity")
+        for p in n._cph_plants.itertuples():
+            if p.kind == "backpressure":
+                q = link.sel(name=p.name + "_chp") * p.eta_el / p.cm
+                if p.name + "_bypass" in n.links.index:
+                    q = q + link.sel(name=p.name + "_bypass") * p.eta_bypass
             else:
-                model.constraint(
-                    plant.name + "_extraction_region",
-                    [(p, 1), (q, plant.cv), (fuel, -plant.eta_el)],
-                    upper=0,
-                )
-                model.constraint(
-                    plant.name + "_backpressure_limit", [(p, 1), (q, -plant.cm)], lower=0
-                )
-            supply.append((q, 1))
-        peaks = []
-        for fuel in ["gas", "oil", "bio", "electric"]:
-            cost = (
-                (price + upstream["electricity_adder_dkk_mwh"])
-                if fuel == "electric"
-                else upstream[fuel + "_dkk_mwh_fuel"]
+                q = link.sel(name=p.name + "_heat") * p.eta_el / p.cv
+                power = link.sel(name=p.name + "_power") * p.eta_el
+                m.add_constraints(power >= p.cm * q, name=p.name + "_backpressure_limit")
+            m.add_constraints(
+                q <= (p.heat_mw + p.bypass_mw) * p.availability,
+                name=p.name + "_total_heat_capacity",
             )
-            q = model.variable(
-                fuel + "_boiler_heat_mw",
-                upper=upstream[fuel + "_mw"],
-                cost=cost / upstream[fuel + "_efficiency"] + upstream["boiler_vom_dkk_mwh"],
+        for name, spec in cfg["upstream"]["accumulators"].items():
+            m.add_constraints(
+                link.sel(name=name + "_charge") + link.sel(name=name + "_discharge")
+                <= spec["power_mw"],
+                name=name + "_shared_converter",
             )
-            peaks.append((q, 1))
-            supply.append((q, 1))
-        model.constraint("peak_shared_fuel_capacity", peaks, upper=upstream["shared_peak_mw"])
-        if upstream["waste_policy"] != "observed_upper_bound":
-            raise ValueError("Only observed_upper_bound waste policy is supported")
-        waste = model.variable(
-            "waste_heat_mw",
-            upper=np.minimum(frame.waste_available_mw.to_numpy(), upstream["waste_capacity_mw"]),
-            cost=upstream["waste_vom_dkk_mwh_heat"] - price * upstream["waste_power_heat_ratio"],
-        )
-        supply.append((waste, 1))
-        regional_hp = model.variable(
-            "regional_hp_heat_mw",
-            upper=upstream["heat_pump_mw"],
-            cost=(price + upstream["electricity_adder_dkk_mwh"]) / upstream["heat_pump_cop"],
-        )
-        supply.append((regional_hp, 1))
-        for name, settings in upstream["accumulators"].items():
-            c, d, _ = add_storage(
-                model,
-                name,
-                settings,
-                initial=settings["energy_mwh"] / 2,
-                terminal=settings["energy_mwh"] / 2,
+            m.add_constraints(
+                m["Store-e"].sel(name=name).isel(snapshot=-1) == spec["energy_mwh"] / 2,
+                name=name + "_terminal",
             )
-            # Continuous accumulators are an explicit relaxation: gross flows are bounded
-            # and reported; a shared converter prevents doubling rated heat exchange.
-            model.constraint(
-                name + "_shared_converter", [(c, 1), (d, 1)], upper=settings["power_mw"]
+    if n._cph_fixed_local is not None:
+        fixed = n._cph_fixed_local
+        for expr, column in [(h, "hx_mw"), (d, "ptes_discharge_mw")]:
+            m.add_constraints(expr == _series(n, fixed[column]), name="actual_" + column)
+        for name in ["city2", "groundwater"]:
+            cop = _series(n, n._cph_inputs[cfg["heat_pumps"][name]["cop_column"]])
+            m.add_constraints(
+                link.sel(name=name) * cop == _series(n, fixed[name + "_heat_mw"]),
+                name="actual_" + name,
             )
-            supply.extend([(c, -1), (d, 1)])
-        model.equality("regional_heat_balance", supply, residual * loss_multiplier)
-    model.config, model.inputs, model.plants = config, frame.copy(), plants.copy()
-    return model
+    for name, values in (fixed_modes or {}).items():
+        m.add_constraints(m[name] == values, name="fixed_mode_" + name)
+
+
+def _optimise(n, *, relax=False, fixed_modes=None):
+    cfg = n._cph_config
+    n.optimize.create_model(linearized_unit_commitment=relax or not cfg["integer_operation"])
+    add_constraints(n, n.snapshots, relax=relax, fixed_modes=fixed_modes)
+    settings = cfg["solver"]
+    backend = settings.get("backend", "highs")
+    if backend == "highs":
+        options = {
+            "time_limit": settings["time_limit"],
+            "mip_rel_gap": settings["mip_rel_gap"],
+            "threads": settings.get("threads", 4),
+        }
+    elif backend == "gurobi":
+        options = {
+            "TimeLimit": settings["time_limit"],
+            "MIPGap": settings["mip_rel_gap"],
+            "Threads": settings.get("threads", 4),
+            "OutputFlag": 0,
+        }
+    else:
+        raise ValueError("Unknown solver backend")
+    status, condition = n.optimize.solve_model(
+        solver_name=backend, solver_options=options, io_api="direct", log_to_console=False
+    )
+    if status != "ok" or condition != "optimal":
+        raise RuntimeError(f"No accepted solution: {status}/{condition}")
+    return n
+
+
+def feasibility(n):
+    """Evaluate every active Linopy constraint and bound independently of solver status."""
+    maximum = 0.0
+    for name, constraint in n.model.constraints.items():
+        lhs, rhs = constraint.lhs.solution.values, constraint.rhs.values
+        mask = constraint.labels.values >= 0
+        error = lhs - rhs
+        signs = constraint.sign.values
+        violation = np.where(signs == "=", np.abs(error), np.where(signs == "<=", error, -error))
+        if not np.isfinite(violation[mask]).all():
+            raise RuntimeError("Non-finite active constraint: " + name)
+        maximum = max(maximum, float(np.maximum(violation[mask], 0).max(initial=0)))
+    bound_error, integer_error = 0.0, 0.0
+    for _, variable in n.model.variables.items():
+        values = variable.solution.values
+        mask = variable.labels.values >= 0
+        violation = np.maximum(variable.lower.values - values, values - variable.upper.values)
+        bound_error = max(bound_error, float(np.maximum(violation[mask], 0).max(initial=0)))
+        if variable.attrs.get("binary", False) or variable.attrs.get("integer", False):
+            integer_error = max(
+                integer_error, float(np.abs(values[mask] - np.rint(values[mask])).max(initial=0))
+            )
+    if max(maximum, bound_error, integer_error) > 1e-5:
+        raise RuntimeError("Solver result failed independent feasibility check")
+    return {
+        "max_constraint_violation": maximum,
+        "max_bound_violation": bound_error,
+        "max_integer_violation": integer_error,
+    }
+
+
+def conditional_prices(n, solution=None):
+    """Resolve a continuous PyPSA/Linopy model with accepted integer decisions fixed."""
+    if n._cph_config["objective"] != "system":
+        raise ValueError("Upstream marginal values require the system objective")
+    if not n._cph_config["integer_operation"]:
+        n._cph_conditional_bus_prices = n.buses_t.marginal_price.copy()
+        return n.buses_t.marginal_price.heat_cph.to_numpy()
+    names = [
+        "ptes_charge_on",
+        "ptes_discharge_on",
+        "Link-status",
+        "Link-start_up",
+        "Link-shut_down",
+    ]
+    modes = (
+        {
+            name: n.model[name].solution.copy(deep=True)
+            for name in names
+            if name in n.model.variables
+        }
+        if n._cph_config["integer_operation"]
+        else {}
+    )
+    price_network = build(
+        n._cph_inputs, n._cph_config, n._cph_plants, fixed_local=n._cph_fixed_local
+    )
+    _optimise(price_network, relax=True, fixed_modes=modes)
+    feasibility(price_network)
+    n._cph_conditional_bus_prices = price_network.buses_t.marginal_price.copy()
+    return price_network.buses_t.marginal_price.heat_cph.to_numpy()
 
 
 @dataclass
 class Solution:
+    network: pypsa.Network
     dispatch: pd.DataFrame
     summary: dict
     raw: object
 
 
-def gurobi_solve(model, *, lower=None, upper=None, integer=None):
-    """Optional licensed backend for the exact same sparse matrix, including LP duals."""
-    try:
-        import gurobipy as gp
-    except ImportError as error:
-        raise RuntimeError(
-            "Install the optional gurobi extra and supply a valid licence"
-        ) from error
-    try:
-        with gp.Env(params={"OutputFlag": 0}) as env, gp.Model(env=env) as optimisation:
-            settings = model.config["solver"]
-            optimisation.Params.TimeLimit = settings["time_limit"]
-            optimisation.Params.MIPGap = settings["mip_rel_gap"]
-            optimisation.Params.Threads = settings.get("threads", 4)
-            discrete = np.array(model.integer if integer is None else integer, dtype=bool)
-            variables = optimisation.addMVar(
-                len(model.cost),
-                lb=np.array(model.lower if lower is None else lower),
-                ub=np.array(model.upper if upper is None else upper),
-                obj=np.array(model.cost),
-                vtype=np.where(discrete, "I", "C"),
-            )
-            matrix = model.matrix().tocsr()
-            low, high = np.array(model.row_lower), np.array(model.row_upper)
-            eq = low == high
-            blocks = []
-            for mask, sense, rhs in [
-                (eq, "=", low),
-                (~eq & np.isfinite(high), "<", high),
-                (~eq & np.isfinite(low), ">", low),
-            ]:
-                if mask.any():
-                    blocks.append(
-                        (mask, optimisation.addMConstr(matrix[mask], variables, sense, rhs[mask]))
-                    )
-            optimisation.optimize()
-            has_solution = optimisation.SolCount > 0
-            optimal = optimisation.Status == gp.GRB.OPTIMAL
-            duals = np.full(len(low), np.nan)
-            if optimal and not discrete.any():
-                for mask, block in blocks:
-                    duals[mask] = block.Pi
-            return SimpleNamespace(
-                x=variables.X if has_solution else None,
-                fun=optimisation.ObjVal if has_solution else np.nan,
-                success=optimal,
-                status=0 if optimal else int(optimisation.Status),
-                message=f"Gurobi termination status {optimisation.Status}",
-                mip_gap=optimisation.MIPGap if has_solution and discrete.any() else 0.0,
-                mip_dual_bound=(
-                    optimisation.ObjBound
-                    if discrete.any()
-                    else optimisation.ObjVal
-                    if has_solution
-                    else np.nan
-                ),
-                duals=duals,
-            )
-    except gp.GurobiError as error:
-        raise RuntimeError(f"Gurobi could not solve this case: {error}") from error
-
-
-def conditional_prices(model, solution):
-    """LP duals with MILP commitments fixed. They are NOT nonconvex market-clearing prices."""
-    matrix = model.matrix().tocsr()
-    low, high = np.array(model.row_lower), np.array(model.row_upper)
-    equality = low == high
-    upper = ~equality & np.isfinite(high)
-    lower = ~equality & np.isfinite(low)
-    bounds = np.array([model.lower, model.upper], dtype=float).T
-    discrete = np.array(model.integer, dtype=bool)
-    bounds[discrete, 0] = np.rint(solution.x[discrete])
-    bounds[discrete, 1] = np.rint(solution.x[discrete])
-    if model.config["solver"].get("backend", "highs") == "gurobi":
-        result = gurobi_solve(
-            model, lower=bounds[:, 0], upper=bounds[:, 1], integer=np.zeros(len(model.integer))
-        )
-        if not result.success:
-            raise RuntimeError(f"Fixed-commitment LP failed: {result.message}")
-        return result.duals[np.array(model.row_names) == "regional_heat_balance"]
-    result = linprog(
-        model.cost,
-        A_ub=vstack([matrix[upper], -matrix[lower]]),
-        b_ub=np.r_[high[upper], -low[lower]],
-        A_eq=matrix[equality],
-        b_eq=low[equality],
-        bounds=bounds,
-        method="highs",
-        options={"time_limit": model.config["solver"]["time_limit"]},
-    )
-    if not result.success:
-        raise RuntimeError(f"Fixed-commitment LP failed: {result.message}")
-    names = np.array(model.row_names)[equality]
-    return result.eqlin.marginals[names == "regional_heat_balance"]
-
-
-def solve(model, *, prices=False):
-    config = model.config
-    backend = config["solver"].get("backend", "highs")
-    if backend not in ("highs", "gurobi"):
-        raise ValueError("Unknown solver backend")
-    result = (
-        gurobi_solve(model)
-        if backend == "gurobi"
-        else milp(
-            np.array(model.cost),
-            integrality=np.array(model.integer),
-            bounds=Bounds(model.lower, model.upper),
-            constraints=LinearConstraint(model.matrix(), model.row_lower, model.row_upper),
-            options={k: config["solver"][k] for k in ["time_limit", "mip_rel_gap"]},
-        )
-    )
-    if result.x is None or (not result.success and not config["solver"]["allow_suboptimal"]):
-        raise RuntimeError(f"No accepted solution: {result.message}")
-    activity = model.matrix() @ result.x
-    constraint_violation = np.maximum(
-        np.array(model.row_lower) - activity, activity - np.array(model.row_upper)
-    ).max(initial=0.0)
-    bound_violation = np.maximum(
-        np.array(model.lower) - result.x, result.x - np.array(model.upper)
-    ).max(initial=0.0)
-    integer = np.array(model.integer, dtype=bool)
-    integer_violation = np.abs(result.x[integer] - np.rint(result.x[integer])).max(initial=0.0)
-    if max(constraint_violation, bound_violation, integer_violation) > 1e-5:
-        raise RuntimeError("Solver incumbent failed independent feasibility check")
-    dispatch = model.inputs.copy()
-    for name, indices in model.variables.items():
-        dispatch[name] = result.x[indices]
-    hp = config["heat_pumps"]
-    dispatch["local_hp_electricity_mw"] = sum(
-        dispatch[name + "_heat_mw"] / dispatch[hp[name]["cop_column"]]
-        for name in ["city2", "groundwater"]
-    )
-    dispatch["ptes_pump_electricity_mw"] = (
-        dispatch.ptes_charge_mw + dispatch.ptes_discharge_mw
-    ) * config["ptes"]["pump_mwh_el_per_mwh_heat"]
-    owned = config["settlement_boundary"] == "legacy_owned_store"
-    local_pump = (
-        dispatch.ptes_pump_electricity_mw
-        if owned
-        else dispatch.ptes_discharge_mw * config["ptes"]["pump_mwh_el_per_mwh_heat"]
-    )
-    electricity_cost = (dispatch.local_hp_electricity_mw + local_pump) * (
-        dispatch.electricity_dkk_mwh + hp["electricity_adder_dkk_mwh"]
-    )
-    starts = sum(
-        dispatch.get(name + "_start", pd.Series(0.0, index=dispatch.index)).sum()
-        * hp[name]["capacity_mw"]
-        * hp["startup_dkk_per_mw"]
-        for name in ["city2", "groundwater"]
-    )
-    discount = (
-        dispatch.discharge_discount_dkk_mwh
-        if "discharge_discount_dkk_mwh" in dispatch
-        else config["discharge_discount_dkk_mwh"]
-    )
-    billed_storage_flow = dispatch.ptes_charge_mw if owned else dispatch.ptes_discharge_mw
-    heat_payment = (dispatch.hx_mw + billed_storage_flow) * dispatch.reference_tariff_dkk_mwh
-    discharge_credit = dispatch.ptes_discharge_mw * discount
-    settlements = {
-        "heat_purchase_dkk": float(heat_payment.sum()),
-        "discharge_credit_dkk": float(discharge_credit.sum()),
-        "supplier_local_heat_revenue_dkk": float((heat_payment - discharge_credit).sum()),
-        "local_electricity_and_startup_dkk": float(electricity_cost.sum() + starts),
-        "local_expenditure_dkk": float(
-            (heat_payment - discharge_credit).sum() + electricity_cost.sum() + starts
-        ),
-    }
-    contributions = {
-        name: float(np.dot(result.x[ids], np.array(model.cost)[ids]))
-        for name, ids in model.variables.items()
-    }
-    warnings = [
-        "Representative scenario; not a calibrated operator model",
-        "Unverified demand boundary and 2019 HTF seasonal demand template",
-        "Scenario fuel, fiscal and O&M costs; not historical contracts",
-        "PTES loss and pumping assumptions require validation",
-        "Settlement boundary and reference tariff need contractual verification",
-    ]
-    if not config["integer_operation"]:
-        warnings.append("LP relaxation: fractional modes and simultaneous storage flows possible")
-    if config["objective"] == "system":
-        warnings.append("Upstream CHP commitment and accumulator operating modes are relaxed")
-    summary = {
-        "objective_kind": config["objective"],
-        "objective_definition": "Net operating expenditure; includes scenario grid/fiscal adders",
-        "solver_backend": backend,
-        "objective_dkk": float(result.fun),
-        "solver_status": int(result.status),
-        "solver_message": result.message,
-        "mip_gap": float(getattr(result, "mip_gap", 0.0) or 0.0),
-        "mip_dual_bound_dkk": (
-            float(result.mip_dual_bound)
-            if getattr(result, "mip_dual_bound", None) is not None
-            else float(result.fun)
-        ),
-        "accepted_suboptimal": not bool(result.success),
-        "hours": len(dispatch),
-        "variables": len(model.cost),
-        "constraints": len(model.row_lower),
-        "max_constraint_violation": float(max(0, constraint_violation)),
-        "max_bound_violation": float(max(0, bound_violation)),
-        "max_integer_violation": float(integer_violation),
-        "ptes_charge_mwh": float(dispatch.ptes_charge_mw.sum()),
-        "ptes_discharge_mwh": float(dispatch.ptes_discharge_mw.sum()),
-        "ptes_equivalent_cycles": float(
-            dispatch.ptes_discharge_mw.sum() / config["ptes"]["energy_mwh"]
-        ),
-        "ptes_terminal_mwh": float(dispatch.ptes_energy_mwh.iloc[-1]),
-        "cost_contributions_dkk": contributions,
-        "illustrative_settlement": settlements,
-        "assumptions": config,
-        "warnings": warnings,
-    }
-    summary["absolute_optimality_gap_dkk"] = abs(
-        summary["objective_dkk"] - summary["mip_dual_bound_dkk"]
-    )
-    if config["objective"] == "system":
-        up = config["upstream"]
-        fuel_cost = sum(
-            float((dispatch[p.name + "_fuel_mw"] * p.fuel_dkk_mwh).sum())
-            for p in model.plants.itertuples()
-        )
-        fuel_cost += sum(
-            float(
-                dispatch[f + "_boiler_heat_mw"].sum()
-                / up[f + "_efficiency"]
-                * up[f + "_dkk_mwh_fuel"]
-            )
-            for f in ["gas", "oil", "bio"]
-        )
-        upstream_el = (
-            dispatch.electric_boiler_heat_mw / up["electric_efficiency"]
-            + dispatch.regional_hp_heat_mw / up["heat_pump_cop"]
-        )
-        local_el = dispatch.local_hp_electricity_mw + dispatch.ptes_pump_electricity_mw
-        power = sum(dispatch[p + "_power_mw"] for p in model.plants.name)
-        power += dispatch.waste_heat_mw * up["waste_power_heat_ratio"]
-        variable_cost = sum(
-            float((dispatch[p.name + "_heat_mw"] * p.vom_dkk_mwh_heat).sum())
-            for p in model.plants.itertuples()
-        )
-        variable_cost += sum(
-            float(dispatch[f + "_boiler_heat_mw"].sum() * up["boiler_vom_dkk_mwh"])
-            for f in ["gas", "oil", "bio", "electric"]
-        )
-        variable_cost += float(dispatch.waste_heat_mw.sum() * up["waste_vom_dkk_mwh_heat"])
-        summary["operating_cost_breakdown_dkk"] = {
-            "fuel": fuel_cost,
-            "variable_om": variable_cost,
-            "electricity_spot_imports": float(
-                ((upstream_el + local_el) * dispatch.electricity_dkk_mwh).sum()
-            ),
-            "electricity_adders": float(
-                (
-                    upstream_el * up["electricity_adder_dkk_mwh"]
-                    + local_el * hp["electricity_adder_dkk_mwh"]
-                ).sum()
-            ),
-            "hp_startups": float(starts),
-            "electricity_sales_credit": -float((power * dispatch.electricity_dkk_mwh).sum()),
-        }
-        summary["waste_unused_availability_mwh"] = float(
-            (
-                np.minimum(dispatch.waste_available_mw, config["upstream"]["waste_capacity_mw"])
-                - dispatch.waste_heat_mw
-            ).sum()
-        )
-        summary["regional_accumulator_simultaneous_hours"] = {
-            name: int(
-                (
-                    (dispatch[name + "_charge_mw"] > 1e-6)
-                    & (dispatch[name + "_discharge_mw"] > 1e-6)
-                ).sum()
-            )
-            for name in config["upstream"]["accumulators"]
-        }
+def solve(n, *, prices=False):
+    _optimise(n)
+    checks = feasibility(n)
+    dispatch = collect(n)
+    summary = summarise(n, dispatch)
+    summary.update(checks)
     if prices:
-        if config["objective"] != "system":
-            raise ValueError("Upstream marginal values require the system objective")
-        dispatch["conditional_upstream_value_dkk_mwh"] = conditional_prices(model, result)
-        summary["price_method"] = "LP regional-balance dual with all integer decisions fixed"
-    return Solution(dispatch, summary, result)
+        dispatch["conditional_upstream_value_dkk_mwh"] = conditional_prices(n)
+        summary["price_method"] = (
+            "Continuous PyPSA/Linopy solve with all commitment decisions fixed"
+        )
+        n.buses_t.marginal_price = n._cph_conditional_bus_prices.copy()
+        n.meta["price_method"] = summary["price_method"]
+    elif n._cph_config["integer_operation"]:
+        n.buses_t.marginal_price.loc[:, :] = np.nan
+        n.meta["price_method"] = (
+            "No raw MILP duals reported; use --prices for a fixed-commitment LP"
+        )
+    else:
+        n.meta["price_method"] = "Continuous dispatch LP"
+    n.meta["solver_status"] = summary["solver_status"]
+    n.meta["objective_dkk"] = summary["objective_dkk"]
+    n.meta["response_charging_policy"] = n._cph_config.get("response", {}).get(
+        "charging_policy", "curtailable"
+    )
+    return Solution(n, dispatch, summary, SimpleNamespace(fun=n.objective, success=True))
