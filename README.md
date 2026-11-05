@@ -1,6 +1,6 @@
 # Dynamic heat tariffs and PTES operation
 
-Hourly optimisation of representative Copenhagen heat dispatch and dynamic
+PyPSA optimisation of representative hourly Copenhagen heat dispatch and dynamic
 PTES-discharge tariffs at the VEKS–Høje Taastrup boundary. The model uses fixed
 plant capacities, public regional data and explicitly documented scenario assumptions.
 
@@ -26,15 +26,17 @@ cph-dispatch demo --hours 168 --prices
 
 See [model/README.md](model/README.md) for public 2024 data preparation, annual
 dispatch, local discharge-credit experiments and reproducibility instructions.
-The default solver is HiGHS through SciPy; no commercial solver is required.
+The physical system is a PyPSA network with custom Linopy constraints. HiGHS is the
+default solver; Gurobi is optional. Every accepted solve exports `network.nc`.
 
 ## Research status
 
 The new model optimises a fixed Copenhagen producer portfolio, regional storage
 and local HTF/PTES operation. It includes an explicit discharge-service settlement
-and a rational local-response experiment. It does not yet complete the proposed
-behavioural response, upstream corrective redispatch, deviation penalty and tariff
-evaluation loop. Demand-metering boundaries, plant availability, cost assumptions,
+and a rational local-response experiment, followed by corrective upstream dispatch.
+The supplied-discount comparison supports an explicit charging-curtailment
+assumption. Behavioural response, tariff derivation, deviation penalties and repeated
+feedback remain research tasks. Demand-metering boundaries, plant availability, cost assumptions,
 waste treatment and local settlement/pumping allocation need empirical validation
 before interpreting the scenarios as a historical reconstruction or final tariff.
 

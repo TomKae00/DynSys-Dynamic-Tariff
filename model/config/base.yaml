@@ -4,13 +4,14 @@ demand_boundary: assumed_gross_including_htf
 network_loss_fraction: 0.02  # scenario, not a calibrated loss estimate
 objective: system
 settlement_boundary: discharge_service
+response:
+  charging_policy: curtailable  # announced charging is an upper bound; fixed reproduces the old experiment
 integer_operation: true
 solver:
-  backend: highs  # optional gurobi uses the same sparse formulation
-  threads: 4  # Gurobi only; SciPy controls its bundled HiGHS threading
+  backend: highs  # PyPSA/Linopy solver; gurobi is optional
+  threads: 4
   time_limit: 120
   mip_rel_gap: 0.0001
-  allow_suboptimal: false
 ptes:
   energy_mwh: 3300
   power_mw: 23  # effective scenario; test design 30 separately
@@ -72,4 +73,3 @@ upstream:
       power_mw: 330
       loss_per_hour: 0.0001
 discharge_discount_dkk_mwh: 0
-
