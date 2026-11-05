@@ -1,8 +1,13 @@
-% Page geometry and the single-column manuscript layout are supplied by elsarticle.
+% Original A4 layout: 11 pt, 1.8 cm margins, spaced paragraphs and lines.
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[english]{babel}
-\usepackage{amsmath,amssymb,mathtools,bm}
+\usepackage[a4paper,margin=1.8cm,footskip=0.5in]{geometry}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{txfonts}
+\usepackage{bm}
+\usepackage{setspace}
+\setstretch{1.25}
 \usepackage{microtype}
 \usepackage{graphicx}
 \usepackage{booktabs,tabularx,array,makecell,multirow}
@@ -21,18 +26,18 @@
 \usepackage{float,placeins}
 \usepackage{enumitem}
 \usepackage{csquotes}
+\usepackage[numbers,sort&compress]{natbib}
 \usepackage{xurl}
 \usepackage[hidelinks]{hyperref}
 \usepackage[nameinlink,noabbrev,capitalise]{cleveref}
-\biboptions{numbers,sort&compress}
 \captionsetup{font=small,labelfont=bf,labelsep=period}
 \captionsetup[table]{position=top,skip=5pt}
 \captionsetup[subfigure]{font=small,labelfont=normalfont}
-\setlength{\parindent}{1em}
-\setlength{\parskip}{0pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
 \setlength{\emergencystretch}{1em}
 \setlength{\jot}{3pt}
-\renewcommand{\arraystretch}{1.13}
+\renewcommand{\arraystretch}{1.15}
 \setlist{nosep,leftmargin=*}
 \setcounter{secnumdepth}{3}
 \allowdisplaybreaks[1]
@@ -41,10 +46,11 @@
 \newcommand{\timesteps}{\mathcal{T}}
 \newcommand{\hpset}{\mathcal{H}}
 \newcommand{\quotes}[1]{``#1''}
-% Keep the existing figure typography when changing the manuscript to 12 pt.
+% Keep the existing figure typography independent of the manuscript font size.
 % The source artwork is included unchanged and scales to the available width.
 \newcommand{\inputtikzfigure}[1]{%
   \begingroup
+  \setstretch{1}% Keep the illustration's original internal line spacing.
   \fontsize{10}{12}\selectfont
   \renewcommand{\small}{\fontsize{9}{11}\selectfont}%
   \renewcommand{\footnotesize}{\fontsize{8}{9.5}\selectfont}%
@@ -52,10 +58,5 @@
   \input{#1}%
   \endgroup
 }
-% No publisher branding or claim of journal submission on the title page.
-\makeatletter
-\def\ps@pprintTitle{%
-  \let\@oddhead\@empty\let\@evenhead\@empty
-  \def\@oddfoot{\hfil\thepage\hfil}%
-  \let\@evenfoot\@oddfoot}
-\makeatother
+\pagestyle{plain}
+

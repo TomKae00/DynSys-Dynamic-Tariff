@@ -1,15 +1,14 @@
-\documentclass[preprint,12pt,times]{elsarticle}
-% Elsevier single-column manuscript layout. Keep this while drafting.
+\documentclass[11pt,a4paper]{article}
+% Original page layout, with the reorganized paper structure retained.
 \input{preamble}
 \begin{document}
-\begin{frontmatter}
 \input{Frontpage}
+\maketitle
 \input{sections/00_Abstract}
-\begin{keyword}
-Pit thermal energy storage \sep District heating \sep Dynamic heat pricing
-\sep Operational optimization \sep Tariff design
-\end{keyword}
-\end{frontmatter}
+{\small\noindent\textbf{Keywords:} Pit thermal energy storage;
+District heating; Dynamic heat pricing; Operational optimization;
+Tariff design.\par}
+\medskip
 \input{sections/00_Nomenclature}
 \input{sections/01_Introduction}
 \input{sections/02_system_description}
@@ -21,8 +20,10 @@ Pit thermal energy storage \sep District heating \sep Dynamic heat pricing
 % \input{sections/06_conclusion}
 \FloatBarrier
 \appendix
+\numberwithin{equation}{section}
 \input{sections/A_heat_pump_performance}
 \FloatBarrier
 \bibliographystyle{elsarticle-num}
 \bibliography{References}
 \end{document}
+

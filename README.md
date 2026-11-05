@@ -4,18 +4,18 @@
 
 Open `main.tex` in Overleaf and use **pdfLaTeX**. The bibliography now uses
 **BibTeX**, not Biber. A normal Overleaf Recompile runs the required passes.
-Locally, with TeX Live's `elsarticle` class installed:
+Locally, use TeX Live with the packages in `preamble.tex` and the
+`elsarticle-num` bibliography style available:
 
 ```sh
 latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
 ```
 
-The default is Elsevier's single-column manuscript layout, using
-`\documentclass[preprint,12pt,times]{elsarticle}`. The paper structure, equation
-groups, and existing illustration files are retained. Float containers are
-adapted to the single-column page.
-There is no publisher logo, journal name, or claim of acceptance/submission.
-TikZ figure bodies are included directly; shell escape is not needed.
+The document uses the original single-column A4 layout: `article`, 11 pt,
+1.8 cm margins, Times-style text and mathematics, 1.25 line spacing, and 6 pt
+spacing between unindented paragraphs. The reorganized paper structure, title
+and abstract, nomenclature, grouped equations, appendix, and references are
+retained. TikZ figure bodies are included directly; shell escape is not needed.
 
 ## Layout references
 
@@ -54,7 +54,7 @@ No text or numerical findings from those papers have been copied.
 - Remove a duplicate bibliography key and supply three previously missing entries.
 - Preserve the current workflow diagram, PTES drawings, charts, and other
   illustration files. A local input wrapper keeps the existing TikZ font sizes
-  when the surrounding manuscript uses 12 pt type.
+  independently of the surrounding manuscript font size and line spacing.
 
 ## Scientific work still open
 
@@ -77,11 +77,12 @@ the exact annual compensation and contractual allocation still require a primary
 contract or stakeholder record. Institutional descriptions have not been fact
 audited as part of the layout edit.
 
-## Single-column layout validation
+## Layout validation
 
-The pdfLaTeX/BibTeX build passes with no undefined references or citations and no
-overfull boxes. All 29 rendered pages were reviewed. SHA-256 comparisons confirm
-that all 29 files under `figures/` are byte-for-byte unchanged by this revision.
-Only the manuscript layout, float containers, table fitting, and surrounding TikZ
-font-size wrapper were adjusted; the mathematical formulation and numerical
-results were retained. This validates typesetting, not the numerical model.
+The restored 11 pt article layout passes the pdfLaTeX/BibTeX build with no
+undefined references or citations and no overfull boxes. All 21 rendered pages
+were reviewed. SHA-256 comparisons confirm that all 29 files under `figures/`
+are byte-for-byte unchanged by this revision. The section files, mathematical
+formulation, and numerical results are retained. This validates typesetting,
+not the numerical model.
+
