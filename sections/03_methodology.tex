@@ -23,7 +23,7 @@ The stages are run once and are not iterated. Comparing Stages~1 and~4 shows how
 \subsection{Operational model}
 \label{sec:model}
 
-The upstream system is represented by one heat bus without network constraints. It comprises the main CHP plants $u\in\mathcal U$ (back-pressure units with heat-only bypass, and extraction units), aggregated waste incineration, gas, oil, biomass and electric peak boilers, regional heat pumps and two heat accumulators $a\in\mathcal A$. HTF is represented by a second heat bus with the heat exchanger, the PTES and two heat pumps $i\in\hpset$. Electricity is traded at the DK2 day-ahead price $c^{\mathrm{el}}_t$. With $\mathbf{x}$ denoting all operating decisions, the coordinated schedule solves
+The upstream system is represented by one heat bus without network constraints. It comprises the main CHP plants $u\in\mathcal U$ (back-pressure units with heat-only bypass, and extraction units), aggregated waste incineration, gas, oil, biomass and electric peak boilers, regional heat pumps and two heat accumulators $a\in\mathcal A$. HTF is represented by a second heat bus with the heat exchanger, the PTES and two heat pumps $i\in\hpset$ (City2 and the Mølleholmen groundwater heat pump), which are dispatched according to HTF's costs. Local supply from data-centre surplus heat, other heat recovered from cooling and solar heat is not represented. Electricity is traded at the DK2 day-ahead price $c^{\mathrm{el}}_t$. With $\mathbf{x}$ denoting all operating decisions, the coordinated schedule solves
 \begin{subequations}
 \label{eq:system}
 \begin{align}
