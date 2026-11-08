@@ -124,21 +124,21 @@ The agreement with the schedule also holds hour by hour, although HTF is free to
 \begin{table}[!htb]
     \centering
     \small
-    \caption{Full implementation of the coordinated schedule and discharge capacity, relative to the measured operation. Savings and gains in MDKK per year; last column: number of weeks in which HTF's bill does not increase.}
+    \caption{Full implementation of the coordinated schedule and discharge capacity, relative to the measured operation. \emph{HTF decides}: HTF chooses discharge itself under the hourly credit (\cref{sec:response}). \emph{Schedule followed}: PTES charging and discharge are fixed to the coordinated schedule, and discharged heat is billed at the current monthly tariff or with the hourly credit; the physical operation, and hence $\Delta C^{\mathrm{sys}}$, is the same in both. Savings and gains in MDKK per year; last column: number of weeks in which HTF's bill does not increase.}
     \label{tab:implementation}
     \begin{tabular}{llrrrrrr}
         \toprule
         Discharge limit & Case & $\Delta C^{\mathrm{sys}}$ & $\Delta B^{\mathrm{HTF}}$ & $\Delta U$ & Discharge [GWh] & Cycles & Weeks \\
         \midrule
         30~MW & Coordinated schedule & 4.86 & -- & -- & 66.5 & 20.2 & -- \\
-              & HTF response, hourly credit & 3.83 & 0.47 & 3.36 & 63.6 & 19.3 & 52 \\
-              & Full implementation, monthly tariff & 4.29 & $-0.28$ & 4.57 & 66.5 & 20.2 & 5 \\
-              & Full implementation, hourly credit & 4.29 & 0.26 & 4.03 & 66.5 & 20.2 & 40 \\
+              & HTF decides, hourly credit & 3.83 & 0.47 & 3.36 & 63.6 & 19.3 & 52 \\
+              & Schedule followed, current tariff & 4.29 & $-0.28$ & 4.57 & 66.5 & 20.2 & 5 \\
+              & Schedule followed, hourly credit & 4.29 & 0.26 & 4.03 & 66.5 & 20.2 & 40 \\
         \midrule
         23~MW & Coordinated schedule & 4.62 & -- & -- & 62.6 & 19.0 & -- \\
-              & HTF response, hourly credit & 3.61 & 0.43 & 3.18 & 59.2 & 17.9 & 52 \\
-              & Full implementation, monthly tariff & 4.04 & $-0.26$ & 4.31 & 62.6 & 19.0 & 5 \\
-              & Full implementation, hourly credit & 4.04 & 0.23 & 3.82 & 62.6 & 19.0 & 40 \\
+              & HTF decides, hourly credit & 3.61 & 0.43 & 3.18 & 59.2 & 17.9 & 52 \\
+              & Schedule followed, current tariff & 4.04 & $-0.26$ & 4.31 & 62.6 & 19.0 & 5 \\
+              & Schedule followed, hourly credit & 4.04 & 0.23 & 3.82 & 62.6 & 19.0 & 40 \\
         \bottomrule
     \end{tabular}
 \end{table}
