@@ -64,6 +64,27 @@ with strength $g=0.25$, upper bound $\overline\delta=10$~DKK/MWh and a monthly i
 \end{equation}
 A constant credit of 5~DKK/MWh, with the same mean as \cref{eq:bounded-credit}, isolates the effect of timing.
 
+The three credits differ in what they take from the value spread (\cref{tab:cases}). The constant credit ignores it. The bounded credit uses only its timing: it pays more in hours in which discharge is more valuable than on average in the month, but its level is set by design, so the payment to HTF is small and predictable. The value share uses both timing and level: HTF receives a fixed fraction of the actual value of discharging, so the payment grows with the value and with $s$, similar to sharing a profit.
+
+\begin{table}[!htb]
+    \centering
+    \small
+    \caption{Evaluated cases. All tariff cases keep the monthly tariff for direct heat and differ only in the credit on discharged heat.}
+    \label{tab:cases}
+    \begin{tabular}{p{0.24\linewidth}p{0.30\linewidth}p{0.36\linewidth}}
+        \toprule
+        Case & Credit on discharged heat & Interpretation \\
+        \midrule
+        Measured 2024 (reference) & none & Current settlement; PTES flows as metered \\
+        Coordinated schedule & -- & Lowest system cost; upper bound for any tariff \\
+        Constant credit & 5~DKK/MWh in every hour & Same payment level as the hourly credit, without timing \\
+        Hourly credit & \cref{eq:bounded-credit}; 0--10~DKK/MWh, mean 5 & Timing of the storage value, fixed payment level \\
+        Value share $s$ & \cref{eq:shared-credit}; share $s$ of the storage value & Timing and level of the storage value; payment grows with $s$ \\
+        Schedule followed & none or hourly credit & PTES fixed to the coordinated schedule (\cref{sec:results-implementation}) \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
 \subsection{HTF response and corrective dispatch}
 \label{sec:response}
 
