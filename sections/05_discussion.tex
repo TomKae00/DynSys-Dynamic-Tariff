@@ -16,14 +16,3 @@ The weekly horizon with perfect foresight corresponds to the seven-day horizon t
 \paragraph{Limitations}
 The response is a rational, perfect-foresight benchmark evaluated in one pass; operational schedules are based on forecasts, and local operation is also shaped by network restrictions and seasonal demand that are represented only in aggregate~\cite{sifnaios2025performance}. HTF's demand is a 2019 profile and its heat pumps are modelled, so the reference reproduces the measured PTES operation but not HTF's other local decisions. Pumping electricity, the electricity adder and transmission losses are provisional. The minimum flows of 10 and 5~MW restrict the optimised cases more than the measured operation, which frequently charged and discharged at lower rates, so the estimated savings are conservative in this respect. The upstream model omits CHP commitment, network constraints and electricity-market feedback, although it reproduces the 2024 production mix closely (\cref{tab:validation}). The weekly horizons use measured inventories at week boundaries; an annual horizon would allow the schedule to shift heat across weeks. Planned 2024 schedules, measured local demand and contract details of the heat purchase agreements are the main data needed to refine the assessment.
 
-\subsection*{Points for discussion}
-\label{sec:feedback}
-This draft is shared to obtain feedback on the following points, which determine the next steps of the analysis:
-\begin{enumerate}[leftmargin=*, itemsep=1pt]
-    \item \emph{Scheduling process.} How is the PTES schedule determined in Varmelast's planning (horizon, update frequency, valuation of stored heat), and how is it communicated to HTF? Could a credit be computed in the same run and announced with the day-ahead heat plan?
-    \item \emph{Discharge capacity.} What determines the current discharge limit of about 23~MW, and which measures would allow the design rating of 30~MW to be used?
-    \item \emph{Operating limits.} Are the assumed minimum flows (10~MW charging, 5~MW discharging), ramp rate and minimum time between charging and discharging representative?
-    \item \emph{Local costs.} Which electricity costs (tariffs, taxes) apply to discharge pumping and to HTF's heat pumps?
-    \item \emph{Data.} Planned PTES schedules for 2024, measured HTF demand and heat-pump operation would allow the reference to be refined and the implemented operation to be compared with the planned operation.
-    \item \emph{Settlement.} How would a credit at the HTF--VEKS boundary interact with the heat purchase agreements, and what share of the storage value would be acceptable to pass on to HTF?
-\end{enumerate}
