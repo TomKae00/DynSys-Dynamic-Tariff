@@ -30,7 +30,7 @@
 \node[input] (vl)  at (0,3.20) {CTR/VEKS heat demand,\\waste heat output};
 \node[input] (el)  at (0,1.85) {DK2 electricity\\price $c^{\mathrm{el}}_t$};
 \node[input] (pl)  at (0,0.50) {CHP, boiler, heat pump\\and accumulator data};
-\node[input] (loc) at (0,-0.85) {HTF demand $d_t$, COPs,\\PTES limits, tariff $\tau_m$};
+\node[input] (loc) at (0,-0.85) {HTF demand $d_t$, COPs, tariff $\tau_m$,\\PTES limits, metered\\2024 PTES operation};
 
 % Stages -----------------------------------------------------------------
 \node[stage] (s1) at (6.0,3.55) {\textbf{1\;Coordinated schedule}\\[1pt]
@@ -74,6 +74,6 @@
     inner sep=5pt, font=\scriptsize, align=center, below=0.45cm of s4] {
     \textbf{One-pass coupling:} prices are frozen from Stage~1; HTF optimises its own bill
     (Stage~3) and the upstream system adapts within the announced charging slots (Stage~4).
-    Every case shares the same inputs, physical limits and PTES end inventories.};
+    All cases share the same inputs and measured PTES start and end inventories.};
 \end{tikzpicture}
 \end{document}
