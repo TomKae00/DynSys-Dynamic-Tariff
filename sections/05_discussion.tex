@@ -1,89 +1,18 @@
 \section{Discussion}
+\label{sec:discussion}
 
+\paragraph{Mechanism}
+Under the current settlement, discharge costs HTF the same as direct supply plus pumping electricity. A discharge credit changes this only if it exceeds the pumping cost, which is a few DKK per MWh, and it creates system value only if it is paid in hours in which the system benefits from discharge. The value spread in \cref{eq:value-spread} provides this timing: it is positive when delivered heat is worth more than stored heat. A small credit derived from it is therefore sufficient, whereas a constant credit of the same average level also rewards discharge in hours in which keeping the heat stored would be preferable. The marginal values are nearly flat within a week because the large accumulators already balance the upstream heat cost over the day; the value of the PTES therefore lies mainly in shifting heat over several days, consistent with its design for cycles of one to two weeks~\cite{sifnaios2025performance}.
 
-\subsection{Data requirements and further model development}
+\paragraph{Distribution}
+The credit reduces VEKS's heat sales revenue, while the operating cost saving arises first at the producers. Whether VEKS itself gains therefore depends on how production cost changes are passed through in its heat purchase agreements; in Danish district heating, which is regulated on a non-profit basis, savings are ultimately reflected in heat prices. The value-sharing results show that the size of the transfer is a design choice: passing more of the storage value to HTF increases welfare but shifts the gain towards HTF, whereas the bounded credit attains nearly the same welfare with a much smaller transfer. The annual compensation for the storage rights remunerates capacity; a discharge credit remunerates its use, and both could be agreed together.
 
-We need HTF's internal operating constraints: what limits discharge, why the observed maximum is approximately 23~MW rather than 30~MW, and how demand, temperatures, local production and network conditions affect it.
+\paragraph{Local heat production}
+Part of the coordination value is not recovered by any discharge credit. It is associated with HTF's heat pumps, whose operation under the monthly tariff differs from the coordinated schedule in periods in which the marginal value of heat in the system is well below the tariff. A time-varying signal that preserves the monthly tariff level is unlikely to change this decision substantially, since it is driven mainly by the tariff level. Aligning local production would require a separate signal, for example an energy price closer to the marginal value of heat combined with a fixed charge for cost recovery.
 
-We also need demand forecasts, PTES charging/discharging schedules and actual operation over a common period---ideally one month to one year---including schedule revisions.
+\paragraph{Planning horizon and implementation}
+The weekly horizon with perfect foresight corresponds to the seven-day horizon that Varmelast has used for the PTES since late 2024. In operation, however, the schedule is set day-ahead and revised several times per day on the basis of forecasts, and for most of 2024 it was planned with a 24-hour horizon (\cref{sec:case_study}). An implementable credit would be computed in the same planning run as the schedule and announced together with it, so that HTF knows the credit when it decides on discharge; revisions of the schedule then raise the question of which credit applies. A rolling-horizon evaluation, re-optimised daily with a multi-day look-ahead and forecast inputs, would represent this process more closely. Because the marginal values vary mainly from day to day rather than within the day (\cref{fig:week-detail}), a credit announced day-ahead appears compatible with the current planning sequence; this remains to be tested.
 
-The key question is why HTF operates discharge conservatively: physical limits, safety margins, slower ramps or a preference for fewer adjustments. This determines whether incentives can improve operation and how to represent the behaviour.
+\paragraph{Limitations}
+The response is a rational, perfect-foresight benchmark evaluated in one pass; operational schedules are based on forecasts, and local operation is also shaped by network restrictions and seasonal demand that are represented only in aggregate~\cite{sifnaios2025performance}. HTF's demand is a 2019 profile and its heat pumps are modelled, so the reference reproduces the measured PTES operation but not HTF's other local decisions. Pumping electricity, the electricity adder and transmission losses are provisional. The minimum flows of 10 and 5~MW restrict the optimised cases more than the measured operation, which frequently charged and discharged at lower rates, so the estimated savings are conservative in this respect. The upstream model omits CHP commitment, network constraints and electricity-market feedback, although it reproduces the 2024 production mix closely (\cref{tab:validation}). The weekly horizons use measured inventories at week boundaries; an annual horizon would allow the schedule to shift heat across weeks. Planned 2024 schedules, measured local demand and contract details of the heat purchase agreements are the main data needed to refine the assessment.
 
-\begin{table}[tbp]
-\centering
-\caption{Distinction between physical limits, operating preferences and responsiveness.}
-\label{tab:response_concepts}
-\begin{tabularx}{\textwidth}{
-    @{}>{\raggedright\arraybackslash}p{0.28\textwidth}
-    >{\raggedright\arraybackslash}X@{}
-}
-\toprule
-\textbf{Concept} & \textbf{Model representation} \\
-\midrule
-Physical flexibility
-& Hard limits on feasible discharge \\
-\addlinespace
-Operating preferences
-& Conservative operating rules or additional objective terms \\
-\addlinespace
-Responsiveness
-& Willingness to change operation when incentives change \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-The economic analysis must distinguish current heat-production cost, the forward-looking value of stored heat and the tariff paid by HTF.
-
-A proposed extension would connect central scheduling, tariff calculation, local response and corrective dispatch as outlined in Table~\ref{tab:future_workflow}.
-
-\begin{table}[tbp]
-\centering
-\caption{Proposed future soft-coupled workflow; this feedback loop is not implemented in the present benchmark.}
-\label{tab:future_workflow}
-\small
-\begin{tabularx}{\textwidth}{
-    @{}>{\raggedright\arraybackslash}p{0.21\textwidth}
-    >{\raggedright\arraybackslash}X
-    >{\raggedright\arraybackslash}X@{}
-}
-\toprule
-\textbf{Step} & \textbf{Model or calculation} & \textbf{Main output} \\
-\midrule
-\textbf{1. Central scheduling}
-& PyPSA optimises represented heat supply and PTES operation using forecasts and HTF's declared capability
-& Charging/discharging schedule and estimated storage value \\
-\addlinespace
-\textbf{2. Tariff calculation}
-& Translate the economic signals into a candidate discharge tariff and deviation charge
-& Prices and settlement rules announced to HTF \\
-\addlinespace
-\textbf{3. HTF response}
-& Behavioural model balances payments, operating preferences and local feasibility
-& Actual discharge, heat-exchanger supply and any adjustable local production \\
-\addlinespace
-\textbf{4. System adjustment}
-& Calculate how actual operation changes upstream supply and storage availability
-& Corrective operating costs, updated storage state and stakeholder outcomes \\
-\addlinespace
-\textbf{5. Tariff evaluation}
-& Repeat for alternative tariff parameters and operating conditions
-& Best-performing structures under the selected criteria \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-Actual operation feeds back into subsequent scheduling. Physical constraints remain binding; penalties apply to chargeable deviations from the accepted schedule.
-
-\subsubsection{Candidate comparisons}
-\begin{itemize}
-    \item Existing arrangements.
-    \item Pumping-cost compensation or a constant discharge discount.
-    \item Dynamic discharge discount.
-    \item Dynamic discount plus shortfall charge.
-    \item Feasible schedule-following benchmark.
-\end{itemize}
-
-Evaluate schedule adherence, operating costs and financial outcomes for HTF and VEKS, keeping tariff transfers separate from system savings.
-
-\subsubsection{Next development step}
-Clarify HTF's constraints and operating preferences, obtain the data, and test the response model over a short period before implementing the full coupling and tariff search.

@@ -1,410 +1,141 @@
 \section{Methodology}
+\label{sec:methodology}
 
-This section presents the optimization model used to evaluate PTES operation under dynamic pricing signals. The model is formulated as an operational dispatch model with externally provided time series inputs and technical constraints representing the main operating limitations of the storage.
+\subsection{Framework}
+\label{sec:framework}
 
-\subsection{Model scope and soft-coupling approach}
+The framework mirrors the current setup described in \cref{sec:case_study}: the schedule is set for the whole system, while HTF decides on the discharge into its network according to its own costs. It consists of four stages (\cref{fig:tariff-workflow}).
+\begin{enumerate}[label=(\arabic*), leftmargin=*, itemsep=0pt]
+    \item \emph{Coordinated schedule.} The operating cost of the upstream system and HTF is minimised jointly. This corresponds to the schedule a system planner would set with perfect information. It provides the PTES charging schedule and the marginal values of delivered and stored heat, and its cost is the lowest cost that any tariff can achieve.
+    \item \emph{Tariff derivation.} The marginal values define an hourly discharge credit, which is subtracted from the monthly tariff for discharged heat.
+    \item \emph{HTF response.} HTF minimises its own expenditure under the resulting tariff. As in the current setup, HTF is not obliged to follow the discharge schedule; it chooses discharge, heat-exchanger import and heat-pump operation itself, while charging is limited to the scheduled amounts.
+    \item \emph{Corrective dispatch.} The upstream units, accumulators and PTES charging are re-dispatched around HTF's decisions, which are kept fixed. This yields the system cost that results from HTF's response.
+\end{enumerate}
+The stages are run once and are not iterated. Comparing Stages~1 and~4 shows how far a tariff makes the operation that is best for the system also the least-cost operation for HTF. The response in Stage~3 is a rational benchmark, not a behavioural prediction. All stages use the same hourly operational model, implemented in PyPSA~\cite{brown2018pypsa} with additional Linopy constraints, with perfect foresight over the evaluated horizon. In addition, a \emph{full-compliance} case fixes HTF's PTES charging and discharge to the coordinated schedule, with HTF choosing only heat-exchanger import and heat-pump operation; it shows the outcome if the schedule were implemented exactly under the current settlement.
 
-The model follows a soft-coupled approach inspired by the Frigg modelling framework~\cite{schledorn2022a,schledorn2024frigg}, where relevant input signals are provided externally and then used by the optimization model to determine the cost-optimal system operation. These inputs include heat demand, electricity prices, heat pump performance profiles, and the marginal cost of external heat generation. The optimization model therefore does not generate forecasts internally, but can use historical data, forecast time series, or outputs from separate price and system models.
-
-This structure allows the model to be applied both for retrospective analysis and for forecast-based operational decision support. In an operational setting, updated forecasts of heat demand, electricity prices, and marginal heat generation costs could be passed to the model in a rolling horizon. The model would then translate these signals into an optimized dispatch of direct heat supply, local heat production, and PTES charging and discharging.
-
-In the present formulation, the optimization is performed with hourly resolution and perfect foresight over the considered time horizon. The resulting operation should therefore be interpreted as a benchmark for economically efficient dispatch under the given input assumptions, rather than as a direct representation of actual real-time control.
-
-% \begin{figure}[t]
-%     \centering
-%     \begin{subfigure}[b]{0.9\linewidth}
-%         \centering
-%         \resizebox{\linewidth}{!}{\subfile{figures/soft_coupling_model.tex}}
-%         \caption{Soft-coupled model structure}
-%         \label{fig:soft-coupling-model}
-%     \end{subfigure}
-%     \caption{Frigg-inspired modelling framework used for the PTES optimization.}
-%     \label{fig:frigg-inspired-framework}
-% \end{figure}
-
-\begin{figure}[t]
+\begin{figure}[!htb]
     \centering
-    \resizebox{\linewidth}{!}{\inputtikzfigure{figures/soft_coupling_model_body}}
-    \caption{Soft-coupled modelling framework for tariff derivation and local PTES operation in Høje Taastrup.}
-    \label{fig:frigg-inspired-framework}
+    \includegraphics[width=\linewidth]{figures/tariff_workflow.pdf}
+    \caption{Framework for deriving and evaluating the PTES discharge tariff. Left: model inputs; dashed arrows indicate which stages use them. Centre: the four stages; solid arrows pass results to the next stage, namely the charging schedule $p^{\mathrm{ch},\star}_t$ and the marginal values $\mu_t$ and $v_t$ from Stage~1, the credit $\delta_t$ and discharge price $\pi^{\mathrm{D}}_t$ from Stage~2, and HTF's decisions from Stage~3. Right: indicators evaluated for each case relative to the measured 2024 operation.}
+    \label{fig:tariff-workflow}
 \end{figure}
 
-%\textbf{Objective function in the figure is not updated yet}
+\subsection{Operational model}
+\label{sec:model}
 
+The upstream system is represented by one heat bus without network constraints. It comprises the main CHP plants $u\in\mathcal U$ (back-pressure units with heat-only bypass, and extraction units), aggregated waste incineration, gas, oil, biomass and electric peak boilers, regional heat pumps and two heat accumulators $a\in\mathcal A$. HTF is represented by a second heat bus with the heat exchanger, the PTES and two heat pumps $i\in\hpset$. Electricity is traded at the DK2 day-ahead price $c^{\mathrm{el}}_t$. With $\mathbf{x}$ denoting all operating decisions, the coordinated schedule solves
+\begin{subequations}
+\label{eq:system}
+\begin{align}
+\min_{\mathbf{x}}\; C^{\mathrm{sys}} = \sum_{t\in\mathcal T}\Big[\sum_{u}\big(c^{\mathrm{fuel}}_u F_{u,t}+c^{\mathrm{vom}}_u Q_{u,t}\big) + c^{\mathrm{el}}_t g^{\mathrm{el}}_t + c^{\mathrm{add}} g^{\mathrm{el,heat}}_t + \sum_{i\in\hpset} c^{\mathrm{su},i} z^i_t\Big] \label{eq:system-cost}
+\end{align}
+subject to, for all $t\in\mathcal T$,
+\begin{align}
+& \textstyle\sum_{u} Q_{u,t} + \sum_{a}\big(p^{\mathrm{dis}}_{a,t}-p^{\mathrm{ch}}_{a,t}\big) = \big(D^{\mathrm{reg}}_t - d_t + f^{\mathrm{HX}}_t + p^{\mathrm{ch}}_t\big)/r && [\mu_t] \label{eq:upstream-balance}\\
+& f^{\mathrm{HX}}_t + p^{\mathrm{dis}}_t + \textstyle\sum_{i} q^i_t = d_t, \qquad \underline f^{\mathrm{HX}}\le f^{\mathrm{HX}}_t\le \overline f^{\mathrm{HX}} \label{eq:local-balance}\\
+& e_t = (1-\lambda)\,e_{t-1} + \eta^{\mathrm{ch}} p^{\mathrm{ch}}_t - p^{\mathrm{dis}}_t/\eta^{\mathrm{dis}}, \quad 0\le e_t\le\overline e, \quad e_0=e^{\mathrm{start}},\; e_T=e^{\mathrm{end}} && [v_t] \label{eq:ptes-balance}\\
+& \underline p^{k} y^{k}_t \le p^{k}_t \le \overline p^{k} y^{k}_t, \qquad |p^{k}_t-p^{k}_{t-1}|\le r^{\mathrm{PTES}}, \qquad k\in\{\mathrm{ch},\mathrm{dis}\} \label{eq:ptes-limits}\\
+& y^{\mathrm{ch}}_t + y^{\mathrm{dis}}_{t'} \le 1,\quad y^{\mathrm{dis}}_t + y^{\mathrm{ch}}_{t'} \le 1, \qquad t'\in\{t,t+1,t+2\} \label{eq:ptes-modes}\\
+& q^i_t = \mathrm{COP}^i_t\,p^i_t, \qquad 0.25\,\overline q^i y^i_t \le q^i_t \le \overline q^i y^i_t, \qquad \text{min.\ up and down time of 2 h} \label{eq:hp}\\
+& \text{CHP, boiler, waste and accumulator limits}, \qquad y^{\mathrm{ch}}_t,y^{\mathrm{dis}}_t,y^i_t,z^i_t\in\{0,1\}. \label{eq:upstream-limits}
+\end{align}
+\end{subequations}
+\Cref{eq:upstream-balance} balances upstream production and accumulator discharge with the remaining regional demand $D^{\mathrm{reg}}_t-d_t$ and the heat delivered to HTF, where $r$ accounts for transmission losses. \Cref{eq:local-balance} is HTF's heat balance. \Cref{eq:ptes-balance,eq:ptes-limits,eq:ptes-modes} describe the PTES with standing loss $\lambda$, minimum and maximum flows when active, ramp limits and a two-hour lock-out between charging and discharging. The start and end inventories are the measured inventories at the boundaries of the evaluated period, so that no case can use stored heat without replacing it. \Cref{eq:hp} is a unit-commitment formulation of the heat pumps~\cite{taylor2015convex} with start-up costs from~\cite{dea2026technologycatalogue}; the COPs follow from ambient temperature (\cref{app:cop}). Back-pressure CHP units produce electricity in a fixed ratio to heat, extraction units operate between their back-pressure and condensing limits, and waste incineration runs at its observed 2024 output, of which only heat in excess of the minimum regional requirement may be cooled. In \cref{eq:system-cost}, $g^{\mathrm{el}}_t$ is the net electricity purchase and $g^{\mathrm{el,heat}}_t$ the electricity used for heat production and pumping, which carries an adder $c^{\mathrm{add}}$ for grid tariffs and taxes; pumping requires $\kappa$ MWh of electricity per MWh charged or discharged. Payments between companies are transfers and do not enter $C^{\mathrm{sys}}$.
 
-\subsection{Mathematical formulation}
-\label{sec:formulation}
+The coordinated schedule follows the same principle as Varmelast's dispatch (\cref{sec:case_study}): units are used in the order of their heat production cost, i.e.\ their variable fuel and operating cost net of the electricity revenue of CHP units, and storage shifts production from expensive to cheap hours. In \cref{eq:system-cost}, the electricity revenue enters through the net electricity purchase $g^{\mathrm{el}}_t$, which is negative when CHP units sell electricity; a back-pressure unit therefore has a low or negative net heat production cost when electricity prices are high. Minimising \cref{eq:system-cost} over all hours jointly yields this merit order in every hour and, in addition, the use of the accumulators and the PTES. The gas price of 350~DKK/MWh corresponds approximately to the 2024 TTF average plus the EU ETS allowance cost; biomass is zero-rated in the EU ETS, and national energy and CO$_2$ taxes are not included, since they are transfers. The model differs from operational planning in that it uses perfect foresight, aggregates the network into one heat bus and uses constant fuel prices.
 
-The model is a mixed-integer linear operational dispatch problem. The decision
-vector $\bm{x}$ collects the heat and electricity flows, storage energy,
-and binary operating and start-up indicators in Table~\ref{tab:nomenclature}.
-Periods are indexed by $t\in\mathcal T=\{1,\ldots,N\}$, with
-$\Delta t=1$~h; heat pumps are indexed by
-$i\in\hpset=\{\mathrm{c2},\mathrm{gw}\}$.
-Unless stated otherwise, the constraints below apply in every period.
+\subsection{Value of stored heat and discharge credit}
+\label{sec:derivation}
 
-\subsubsection{Objective function}
-\label{sec:objective}
-
-Local operating expenditure comprises purchased electricity, imported heat,
-and heat-pump start-up costs:
+After solving \cref{eq:system}, all binary variables are fixed at their optimal values and the problem is re-solved as a linear programme. Its dual variables give the conditional marginal values $\mu_t$ of upstream heat in \cref{eq:upstream-balance} and $v_t$ of stored heat in \cref{eq:ptes-balance}. $\mu_t$ is the marginal heat cost of the system, i.e.\ the net production cost of the last unit used in the merit order of hour $t$, or the value that storage assigns to heat in that hour if a store is at its limit. $v_t$ is the value of one additional MWh in the PTES; it reflects the marginal heat cost of the hours in which the stored heat is expected to be used. Neither value is a settlement price: the heat is billed at the monthly tariff (\cref{sec:case_study}). Replacing one MWh of direct supply by discharge in hour $t$ saves $\mu_t/r$ of upstream production, uses stored heat worth $v_t/\eta^{\mathrm{dis}}$ and requires pumping. For HTF, the same substitution saves the credit $\delta_t$ and requires the same pumping. The two decisions coincide if
 \begin{equation}
-\begin{aligned}
-\min_{\bm{x}}\ C^{\mathrm{HT}}
-={}&\sum_{t\in\timesteps}\Big[
-  \big(c_t^{\mathrm{el}}g_t^{\mathrm{el}}
-      +c_t^{\mathrm{DH}}g_t^{\mathrm{DH}}\big)\Delta t\\
-&\hspace{4.4em}+\sum_{i\in\hpset}c^{\mathrm{su},i}z_t^i\Big].
-\end{aligned}
-\label{eq:objective}
+\delta^{\star}_t = \frac{\mu_t}{r} - \frac{v_t}{\eta^{\mathrm{dis}}},
+\label{eq:value-spread}
 \end{equation}
-Here, $g_t^{\mathrm{el}}$ and $g_t^{\mathrm{DH}}$ are the imported powers
-at the corresponding unit prices $c_t^{\mathrm{el}}$ and
-$c_t^{\mathrm{DH}}$. A start-up cost $c^{\mathrm{su},i}$ is incurred when
-heat pump $i$ changes from the inactive to the active state, indicated by $z_t^i$.
-Investment costs, fixed operation and maintenance costs, network expansion
-costs, and additional variable costs for PTES operation are not included.
-
-\subsubsection{System energy balances}
-\label{sec:balances}
-
-The aggregated balances conserve energy at system buses rather than
-representing detailed hydraulic flows. Purchased electricity supplies the heat
-pumps; imported transmission heat supplies the heat exchanger and PTES
-charging; local demand is met by direct heat supply, heat pumps, and discharge:
-\begin{subequations}\label{eq:balances}
-\begin{align}
-g_t^{\mathrm{el}}&=\sum_{i\in\hpset}p_t^i,
-\label{eq:electricity_balance}\\
-g_t^{\mathrm{DH}}&=f_t^{\mathrm{HX}}+p_t^{\mathrm{ch}},
-\label{eq:import_balance}\\
-f_t^{\mathrm{HX}}+\sum_{i\in\hpset}q_t^i+p_t^{\mathrm{dis}}&=d_t.
-\label{eq:heat_balance}
-\end{align}
-\end{subequations}
-
-\subsubsection{Heat pumps and direct heat supply}
-\label{sec:heat_pumps}
-
-The City2 and groundwater heat pumps are committable multi-port
-\textit{Link} components in PyPSA~\cite{brown2018pypsa}. For every
-$i\in\hpset$, the thermal output, electrical capacity, and operating bounds are
-\begin{subequations}\label{eq:heat_pumps}
-\begin{align}
-q_t^i&=\mathrm{COP}_t^i\,p_t^i,
-\label{eq:hp_conversion}\\
-\overline p^i&=\frac{\overline q^i}
-  {|\timesteps|^{-1}\sum_{t\in\timesteps}\mathrm{COP}_t^i},
-\label{eq:hp_capacity}\\
-0.25\,\overline p^i y_t^i&\leq p_t^i\leq\overline p^i y_t^i,
-\label{eq:hp_bounds}\\
-y_t^i,z_t^i&\in\{0,1\}.
-\label{eq:hp_binary}
-\end{align}
-\end{subequations}
-The installed thermal capacities are
-$\overline q^{\mathrm{c2}}=1.34$~MW$_{\mathrm{th}}$ and
-$\overline q^{\mathrm{gw}}=1.50$~MW$_{\mathrm{th}}$.
-Equation~\eqref{eq:hp_capacity} expresses the nominal capacity on the
-electrical-input side, as required by the PyPSA representation.
-
-The minimum part-load level and start-up costs are based on the Danish Energy
-Agency technology catalogue~\cite{dea2026technologycatalogue}. Start-up costs
-are approximately 106.3~DKK for City2 and 119.0~DKK for the groundwater heat
-pump. Minimum up- and down-times of two hours are assumed, using the PyPSA
-unit-commitment formulation based on Taylor~\cite{taylor2015convex}.
-The exogenous COP calculation and temperature assumptions are given in
-Appendix~\ref{app:cop}; they give constant COPs of 3.51 and 3.30, respectively.
-
-Direct transmission heat enters the local system through an aggregated heat
-exchanger, with a minimum warm-keeping flow and a maximum transfer capacity:
+that is, if the credit equals the value of delivering heat now rather than keeping it stored. Two tariff families are derived from this spread. The \emph{bounded credit} keeps the timing of $\delta^{\star}_t$ and fixes its level,
 \begin{equation}
-\underline f^{\mathrm{HX}}\leq f_t^{\mathrm{HX}}
-\leq\overline f^{\mathrm{HX}}.
-\label{eq:hx_bounds}
+\delta_t = \min\Big\{\max\big\{a_m + g\,(\delta^{\star}_t-\overline{\delta^{\star}}_m),\,0\big\},\,\overline\delta\Big\},
+\label{eq:bounded-credit}
 \end{equation}
-
-\subsubsection{Storage dynamics and operating modes}
-\label{sec:storage}
-
-Stored thermal energy evolves with standing losses and separate charging and
-discharging powers:
-\begin{subequations}\label{eq:storage}
-\begin{align}
-e_t&=(1-\lambda)e_{t-1}
-  +(p_t^{\mathrm{ch}}-p_t^{\mathrm{dis}})\Delta t,
-\label{eq:storage_balance}\\
-0&\leq e_t\leq\overline e,
-\label{eq:storage_bounds}\\
-e_0&=e^{\mathrm{init}}.
-\label{eq:storage_initial}
-\end{align}
-\end{subequations}
-Here, $\lambda$ is the loss fraction per hourly period. No cyclic end condition
-is imposed; the final storage level is determined by the optimization.
-
-The PTES may charge, discharge, or remain idle. Minimum active power levels and
-mutual exclusivity are imposed through
-\begin{subequations}\label{eq:ptes_modes}
-\begin{align}
-y_t^{\mathrm{ch}},y_t^{\mathrm{dis}}&\in\{0,1\},
-\label{eq:ptes_binary}\\
-y_t^{\mathrm{ch}}+y_t^{\mathrm{dis}}&\leq1,
-\label{eq:ptes_exclusivity}\\
-\underline p^{\mathrm{ch}}y_t^{\mathrm{ch}}
-&\leq p_t^{\mathrm{ch}}\leq\overline p^{\mathrm{ch}}y_t^{\mathrm{ch}},
-\label{eq:charge_bounds}\\
-\underline p^{\mathrm{dis}}y_t^{\mathrm{dis}}
-&\leq p_t^{\mathrm{dis}}\leq\overline p^{\mathrm{dis}}y_t^{\mathrm{dis}},
-\label{eq:discharge_bounds}\\
-p_t^{\mathrm{dis}}&\leq d_t.
-\label{eq:discharge_demand}
-\end{align}
-\end{subequations}
-The final bound restricts discharge to heat demand that can absorb it.
-
-\subsubsection{Ramping and switching}
-\label{sec:switching}
-
-For consecutive operating periods $t\in\{2,\ldots,N\}$, power changes are
-bounded by
-\begin{subequations}\label{eq:ramps}
-\begin{align}
--r^{\mathrm{PTES}}&\leq p_t^{\mathrm{ch}}-p_{t-1}^{\mathrm{ch}}
-  \leq r^{\mathrm{PTES}},\label{eq:charge_ramp}\\
--r^{\mathrm{PTES}}&\leq p_t^{\mathrm{dis}}-p_{t-1}^{\mathrm{dis}}
-  \leq r^{\mathrm{PTES}}.\label{eq:discharge_ramp}
-\end{align}
-\end{subequations}
-A two-hour no-reversal rule approximates the phase-shift time between charging
-and discharging. For $k\in\{1,2\}$ and all $t$ such that $t,t+k\in\timesteps$,
-\begin{subequations}\label{eq:switching}
-\begin{align}
-y_t^{\mathrm{ch}}+y_{t+k}^{\mathrm{dis}}&\leq1,
-\label{eq:no_charge_discharge}\\
-y_t^{\mathrm{dis}}+y_{t+k}^{\mathrm{ch}}&\leq1.
-\label{eq:no_discharge_charge}
-\end{align}
-\end{subequations}
-The operating-mode and heat-pump commitment indicators make the formulation
-mixed-integer linear.
-
-\subsection{Upstream heat-cost signal}
-\label{sec:heat_cost}
-
-The external district heating system is represented through a time-varying marginal cost of heat supply. Instead of reproducing the current monthly tariff structure, the model uses a dynamic price signal that approximates the short-run marginal cost of heat generation in the external system. Marginal-cost-based heat pricing has been proposed as a way to provide more cost-reflective operational signals in district heating systems \cite{sjoedin2004marginal,difs2009pricing,sun2016marginal, dominkovic2018influence}. In addition, dynamic and variable heat prices have been shown to reveal and steer flexibility in district heating systems by incentivizing demand-side response to time-varying system conditions \cite{bai2022variable,mokhtari2025dynamic}.
-
-In the present formulation, the external system is approximated by a large wood-chip-fired back-pressure CHP unit. This is used as a stylized proxy for biomass-based CHP generation in the Greater Copenhagen district heating system, where large biomass CHP units are an important part of heat supply. The assumption does not reproduce the full VEKS production portfolio, which also includes waste-to-energy, peak units, and other heat sources.
-
-Since heat and electricity are produced jointly, the marginal cost assigned to heat is calculated using an opportunity-cost formulation. Following previous marginal-cost pricing studies for district heating, the cost assigned to heat is calculated as the fuel-related and variable production cost, including carbon costs where applicable, minus the market value of the co-produced electricity \cite{difs2009pricing,sun2016marginal}. The resulting marginal heat cost is given by:
-
-
+with strength $g=0.25$, upper bound $\overline\delta=10$~DKK/MWh and a monthly intercept $a_m$ such that the mean credit is 5~DKK/MWh. The \emph{value share} passes a share $s$ of the positive spread to HTF,
 \begin{equation}
-\mathrm{MC}_t^{\mathrm{heat}}
-=\frac{c^{\mathrm{bio}}+c_{\mathrm{CHP}}^{\mathrm{var}}
-  +e_{\mathrm{CO}_2}^{\mathrm{bio}}c^{\mathrm{CO}_2}}{\eta_{\mathrm{th}}}
- -\frac{\eta_{\mathrm{el}}}{\eta_{\mathrm{th}}}c_t^{\mathrm{el}}.
-\label{eq:marginal_heat_cost}
+\delta_t = s\,\max\{\delta^{\star}_t,0\},\qquad s\in\{0.25,\,0.5,\,1\}.
+\label{eq:shared-credit}
 \end{equation}
+A constant credit of 5~DKK/MWh, with the same mean as \cref{eq:bounded-credit}, isolates the effect of timing.
 
+The three credits differ in what they take from the value spread (\cref{tab:cases}). The constant credit ignores it. The bounded credit uses only its timing: it pays more in hours in which discharge is more valuable than on average in the month, but its level is set by design, so the payment to HTF is small and predictable. The value share uses both timing and level: HTF receives a fixed fraction of the actual value of discharging, so the payment grows with the value and with $s$, similar to sharing a profit.
 
-where \(c^{\mathrm{bio}}\) is the wood-chip fuel price, \(c^{\mathrm{var}}_{\mathrm{CHP}}\) is the variable operation and maintenance cost per unit of fuel input, \(e^{\mathrm{bio}}_{\mathrm{CO}_2}\) is the fossil CO\(_2\) emission factor assigned to the biomass fuel in the operational dispatch formulation, \(c^{\mathrm{CO}_2}\) is the CO\(_2\) price, and \(\eta_{\mathrm{th}}\) and \(\eta_{\mathrm{el}}\) are the thermal and electrical efficiencies of the CHP unit. The second term represents the opportunity value of the co-produced electricity. Producing one unit of useful heat requires \(1/\eta_{\mathrm{th}}\) units of fuel input and co-produces \(\eta_{\mathrm{el}}/\eta_{\mathrm{th}}\) units of electricity.
-
-A separate fuel tax term is not included in the formulation, since carbon-related costs are already represented through \(e^{\mathrm{bio}}_{\mathrm{CO}_2}c^{\mathrm{CO}_2}\). In the base case, this term is zero because the biomass fuel is assigned no fossil CO\(_2\) emission factor in the short-run dispatch formulation. This should not be interpreted as biomass combustion having no physical CO\(_2\) emissions. Rather, it reflects the accounting treatment of biogenic CO\(_2\) in operational carbon-cost calculations. Under the EU ETS monitoring and reporting framework, biomass fuels can be assigned a zero emission factor if the applicable sustainability and greenhouse-gas saving criteria are fulfilled \cite{ec2025biomassets}. The model therefore does not include an ETS-related CO\(_2\) cost for the biomass fuel in the base case. Life-cycle emissions, carbon debt, and non-CO\(_2\) greenhouse-gas emissions are outside the base-case price signal.
-
-For the numerical implementation, the model uses the 2020 central values for a large wood-chip-fired back-pressure CHP plant from the Danish Energy Agency technology catalogue. The parameter values are summarized in Table~\ref{tab:dynamic_heat_price_parameters}.
-
-\begin{table}[tbp]
+\begin{table}[!htb]
     \centering
     \small
-    \caption{Parameter assumptions for the dynamic heat price formulation.}
-    \label{tab:dynamic_heat_price_parameters}
-    \begin{tabularx}{\textwidth}{@{}lclX@{}}
+    \caption{Evaluated cases. All tariff cases keep the monthly tariff for direct heat and differ only in the credit on discharged heat.}
+    \label{tab:cases}
+    \begin{tabular}{p{0.24\linewidth}p{0.30\linewidth}p{0.36\linewidth}}
         \toprule
-        Parameter & Value & Unit & Source / comment \\
+        Case & Credit on discharged heat & Interpretation \\
         \midrule
-        \(c^{\mathrm{bio}}\) & 271.1 & DKK/MWh\(_i\) &
-        Wood-chip fuel price for central power and CHP plants, based on 75.3 DKK/GJ converted to DKK/MWh \cite{dea2025sob}. \\
-
-        \(c^{\mathrm{var}}_{\mathrm{CHP}}\) & 10.6 & DKK/MWh\(_i\) &
-        Variable O\&M cost of 1.42 EUR/MWh\(_i\) for large wood-chip back-pressure CHP, converted using 7.46 DKK/EUR \cite{dea2026technologycatalogue,nationalbanken_exchange_rate}. \\
-
-        \(e^{\mathrm{bio}}_{\mathrm{CO}_2}\) & 0 & tCO\(_2\)/MWh\(_i\) &
-        Fossil CO\(_2\) factor set to zero for biomass in operational dispatch, consistent with EU ETS zero-rating of biomass where sustainability and greenhouse-gas saving criteria are fulfilled \cite{ec2025biomassets}. \\
-
-        \(c^{\mathrm{CO}_2}\) & 581 & DKK/tCO\(_2\) & Danish socio-economic CO\(_2\) price assumption \cite{dea2025sob}.
-        Not active in the biomass base case because \(e^{\mathrm{bio}}_{\mathrm{CO}_2}=0\). \\
-
-        \(\eta_{\mathrm{th}}\) & 0.83 & -- &
-        Annual average net heat efficiency for large wood-chip back-pressure CHP, 2020 central value \cite{dea2026technologycatalogue}. \\
-
-        \(\eta_{\mathrm{el}}\) & 0.29 & -- &
-        Annual average net electrical efficiency for large wood-chip back-pressure CHP, 2020 central value \cite{dea2026technologycatalogue}. \\
+        Measured 2024 (reference) & none & Current settlement; PTES flows as metered \\
+        Coordinated schedule & -- & Lowest system cost; upper bound for any tariff \\
+        Constant credit & 5~DKK/MWh in every hour & Same payment level as the hourly credit, without timing \\
+        Hourly credit & \cref{eq:bounded-credit}; 0--10~DKK/MWh, mean 5 & Timing of the storage value, fixed payment level \\
+        Value share $s$ & \cref{eq:shared-credit}; share $s$ of the storage value & Timing and level of the storage value; payment grows with $s$ \\
+        Schedule followed & none or hourly credit & PTES fixed to the coordinated schedule (\cref{sec:results-implementation}) \\
         \bottomrule
-    \end{tabularx}
+    \end{tabular}
 \end{table}
 
+\subsection{HTF response and corrective dispatch}
+\label{sec:response}
 
-With these assumptions, Eq.~\eqref{eq:marginal_heat_cost} becomes
+Direct heat keeps the monthly tariff $\tau_m$, while discharged heat is billed at $\tau_m-\delta_t$. Charging heat and charging pumping remain with the upstream side. HTF's response solves
 \begin{equation}
-\begin{aligned}
-\mathrm{MC}_t^{\mathrm{heat}}
- &=\frac{271.1+10.6+0\cdot581}{0.83}
-   -\frac{0.29}{0.83}c_t^{\mathrm{el}}\\
- &\simeq339.4-0.349\,c_t^{\mathrm{el}},
-\end{aligned}
-\label{eq:numerical_heat_cost}
+\min\; C^{\mathrm{HTF}} = \sum_{t\in\mathcal T}\Big[\tau_m f^{\mathrm{HX}}_t + (\tau_m-\delta_t)\,p^{\mathrm{dis}}_t + \big(c^{\mathrm{el}}_t+c^{\mathrm{add}}\big)\Big(\sum_{i} p^i_t + \kappa\,p^{\mathrm{dis}}_t\Big) + \sum_{i} c^{\mathrm{su},i} z^i_t\Big]
+\label{eq:htf-cost}
 \end{equation}
-with heat and electricity prices expressed in DKK/MWh.
+subject to \cref{eq:local-balance,eq:ptes-balance,eq:ptes-limits,eq:ptes-modes,eq:hp} and $0\le p^{\mathrm{ch}}_t\le p^{\mathrm{ch},\star}_t$, where $p^{\mathrm{ch},\star}_t$ is the charging schedule from \cref{eq:system}. HTF thus decides on heat-exchanger import, discharge and local heat-pump operation, while charging remains limited to the scheduled amounts. The schedule enters HTF's problem only through the charging limit and through the credit derived from it, and the PTES inventory at the end of each horizon is the same as in the coordinated schedule. Whether HTF's discharge coincides with the schedule is therefore a result of the tariff, not an assumption. In the full-implementation case, $p^{\mathrm{dis}}_t$ and $p^{\mathrm{ch}}_t$ are additionally fixed to the coordinated schedule. The corrective dispatch re-solves \cref{eq:system} with $f^{\mathrm{HX}}_t$, $p^{\mathrm{dis}}_t$ and $q^i_t$ fixed to HTF's response and $p^{\mathrm{ch}}_t\le p^{\mathrm{ch},\star}_t$. It adjusts only the upstream units, the accumulators and PTES charging to HTF's decisions; HTF's decisions are not revised, and the stages are not iterated.
 
-The opportunity-cost formulation can lead to negative marginal heat costs when the value of electricity production exceeds the allocated fuel, carbon, and operating costs. Such low or negative marginal heat costs for CHP units under high electricity prices are discussed in the district heating market literature \cite{difs2009pricing,liu2019marginal}. In the present model, however, the external heat procurement price is bounded from below:
+\subsection{Reference and evaluation}
+\label{sec:reference}
 
+The reference is the measured 2024 operation. PTES charging and discharging are fixed to the metered hourly flows, without the design limits of \cref{eq:ptes-limits,eq:ptes-modes}; HTF's heat-exchanger import and heat pumps follow \cref{eq:htf-cost} with $\delta_t=0$, and the upstream system is re-dispatched as in Stage~4. With the modelled standing loss, the replayed inventory ends the year 27~MWh above the measured inventory, with a mean absolute deviation of 73~MWh; remaining differences at the end of a period are valued at the final value of stored heat from Stage~1.
+
+Each tariff is evaluated by the reduction in corrective system cost relative to the reference, $\Delta C^{\mathrm{sys}}$, and by its distribution:
 \begin{equation}
-c_t^{\mathrm{DH}}=\max\{0,\mathrm{MC}_t^{\mathrm{heat}}\}.
-\label{eq:heat_price_floor}
+\Delta C^{\mathrm{sys}} = \Delta B^{\mathrm{HTF}} + \Delta U, \qquad
+\rho = \frac{\Delta C^{\mathrm{sys}}}{C^{\mathrm{sys}}_{\mathrm{ref}}-C^{\mathrm{sys}}_{\mathrm{coord}}},
+\label{eq:evaluation}
 \end{equation}
+where $\Delta B^{\mathrm{HTF}}$ is the reduction in \cref{eq:htf-cost}, $\Delta U$ the gain of the upstream side as one aggregate (change in heat revenue plus change in operating cost), and $\rho$ the share of the coordination value that is recovered. $\Delta U$ combines VEKS and the producers; its allocation between them depends on the heat purchase agreements and is not resolved here. Because tariff payments cancel in $\Delta C^{\mathrm{sys}}$, a tariff increases welfare only if $\Delta C^{\mathrm{sys}}>0$, and it is acceptable to both sides only if $\Delta B^{\mathrm{HTF}}\ge0$ and $\Delta U\ge0$.
 
-This lower bound should be interpreted as a modelling assumption on the external heat price faced by the local system, rather than as a statement that CHP marginal costs cannot become negative. It avoids representing situations in which the external district heating system would pay the local system to absorb heat, which is not part of the current tariff structure considered in this study.
+\subsection{Data and parameters}
+\label{sec:data}
 
-\subsection{Scenario design and economic evaluation}
-\label{sec:scenario_design}
+Hourly CTR and VEKS demand, production by technology and waste output for 2024 are taken from Varmelast, and DK2 prices from Energi Data Service. Metered PTES flows and the temperature-based inventory come from the monitoring data of the storage~\cite{sifnaios2025performance}. Plant parameters follow the FFH50 planning assumptions; fuel prices and availability factors are scenario values. HTF's hourly demand is a 2019 profile mapped to 2024 (348~GWh). \Cref{tab:parameters} lists the main parameters. The year is evaluated as 52 weekly horizons; each starts and ends at the measured PTES inventory, so that the weekly results can be summed. Mixed-integer problems are solved to a relative gap of $10^{-4}$, and HTF's problems to $10^{-8}$.
 
-The scenario analysis is still being completed, and the currently reported results reflect the present state of the modelling and will be updated as the analysis progresses.
-
-The scenarios are designed to separate the effects of operational optimization,
-hourly heat pricing, the general price level, and technical operating
-constraints. Unless stated otherwise, all runs use identical heat demand,
-electricity prices, capacities, efficiencies, storage parameters, and initial
-conditions. Each optimized run minimizes the local operating expenditure
-defined in Eq.~\eqref{eq:objective}.
-
-\begin{table}[tbp]
-\centering
-\small
-\caption{Model scenarios and their analytical purpose.}
-\label{tab:model_scenarios}
-\begin{tabularx}{\textwidth}{lXXX}
-\toprule
-Run & Heat-price signal & PTES and HX operation & Main comparison \\
-\midrule
-$R_0$
-& Monthly VEKS tariff
-& Prescribed reference operation
-& Current-operation reference \\
-
-$R_1$
-& Monthly VEKS tariff
-& Endogenous and constrained
-& $R_0$--$R_1$: effect of operational optimization \\
-
-$R_2$
-& Hourly marginal-cost-based price
-& Endogenous and constrained
-& $R_1$--$R_2$: overall effect of dynamic pricing \\
-
-$R_3^{\alpha}$
-& Level-matched hourly signal,
-  $\alpha\in\{0.5,1\}$
-& Endogenous and constrained
-& Effect of hourly variation at the VEKS price level \\
-
-$R_4$
-& Same hourly price as $R_2$
-& Endogenous and unconstrained
-& $R_2$--$R_4$: effect of technical constraints \\
-\bottomrule
-\end{tabularx}
+\begin{table}[!htb]
+    \centering
+    \small
+    \caption{Main parameters. $^{\dagger}$Provisional assumption.}
+    \label{tab:parameters}
+    \begin{tabular}{lll}
+        \toprule
+        Parameter & Value & Note \\
+        \midrule
+        PTES capacity $\overline e$ & 3,300 MWh & \\
+        Charge / discharge limits $\overline p^{\mathrm{ch}},\overline p^{\mathrm{dis}}$ & 30 / 30 MW & Minimum 10 / 5 MW when active \\
+        Ramp limit $r^{\mathrm{PTES}}$ & 12 MW/h & \\
+        Standing loss $\lambda$ & 0.0275\,\%/h & Consistent with metered 2024 losses \\
+        Pumping electricity $\kappa$ & 0.005 MWh/MWh$^{\dagger}$ & Per MWh charged and discharged \\
+        Heat exchanger $\underline f^{\mathrm{HX}},\overline f^{\mathrm{HX}}$ & 0.5 / 100 MW & Station towards HTF \\
+        Heat pumps $\overline q^{\mathrm{c2}},\overline q^{\mathrm{gw}}$ & 1.34 / 1.50 MW & COP 3.1--3.6 / 3.0--3.3 \\
+        Electricity adder $c^{\mathrm{add}}$ & 125 DKK/MWh$^{\dagger}$ & Grid tariffs and taxes \\
+        Delivery factor $r$ & 0.98$^{\dagger}$ & Transmission losses \\
+        Monthly tariff $\tau_m$ & 153--387 DKK/MWh & 2024 \\
+        CHP (AMV1, AMV4, AVV1, AVV2, KKV8) & 1,521 MW & Heat capacity, 90\% availability \\
+        Waste incineration & 519.5 MW & Observed 2024 output \\
+        Peak boilers / regional heat pumps & 2,033 / 20 MW & \\
+        Accumulators (AMV / AVV) & 1,000 / 2,200 MWh & 300 / 330 MW \\
+        \bottomrule
+    \end{tabular}
 \end{table}
-
-In $R_0$, PTES and heat-exchanger operation are prescribed according to the
-reference operation, while the remaining local system is optimized. In $R_1$,
-the same monthly VEKS tariff is applied, but PTES and heat-exchanger operation
-are determined endogenously. The comparison therefore isolates the effect of
-operational optimization under the existing tariff. Run $R_2$ applies the
-hourly price $c_t^{\mathrm{DH}}$ derived from the marginal heat cost
-$\mathrm{MC}_t^{\mathrm{heat}}$, while $R_4$ uses the same price and input data but
-relaxes the detailed PTES operating constraints.
-
-\subsubsection{Price-level sensitivity}
-
-Because the monthly VEKS tariff and the hourly price differ in both temporal
-variation and average level, the direct comparison between $R_1$ and $R_2$
-does not isolate the effect of hourly pricing. Level-matched signals are
-therefore constructed as
-
-
-\begin{equation}
-\begin{aligned}
-c_t^{\mathrm{DH},\alpha}
-={}&c_{m(t)}^{\mathrm{VEKS}}\\
- &+\alpha\big(\mathrm{MC}_t^{\mathrm{heat}}
-       -\overline{\mathrm{MC}}_{m(t)}^{\mathrm{heat}}\big),
-\end{aligned}
-\label{eq:level_matched_price}
-\end{equation}
-for $\alpha\in\{0,0.5,1\}$, where $c_{m(t)}^{\mathrm{VEKS}}$ is the VEKS tariff in the month containing
-hour $t$, and $\overline{\mathrm{MC}}_{m(t)}^{\mathrm{heat}}$ is the corresponding
-monthly mean marginal heat cost. The case $\alpha=0$ is identical to $R_1$,
-while $R_3^{0.5}$ and $R_3^{1}$ introduce half and full hourly variation,
-respectively. All three signals retain the VEKS mean within each month. If a
-lower price bound is imposed, the monthly intercept is recalibrated to preserve
-this mean.
-
-\subsubsection{Economic evaluation}
-
-For scenario $s$, the optimized value of Eq.~\eqref{eq:objective} is denoted
-by $C_s^{\mathrm{HT}}$ and represents the modelled local operating expenditure
-of Høje Taastrup. Objective values are directly comparable between scenarios
-using the same price signal, specifically $R_0$ and $R_1$, and $R_2$ and
-$R_4$. Across different price signals, however, objective differences combine
-changes in dispatch, price timing, price level, and tariff cost-recovery
-components.
-
-The modelled payment for imported heat is reported separately as
-
-\begin{equation}
-P_s^{\mathrm{DH}}
-=
-\sum_{t\in\mathcal{T}}
-c_{t,s}^{\mathrm{DH}}g_{t,s}^{\mathrm{DH}}\Delta t.
-\label{eq:district_heat_payment}
-\end{equation}
-
-This represents a cost to Høje Taastrup and the corresponding modelled
-heat-sale revenue of the upstream supplier. Differences in this payment are
-financial transfers and are therefore not interpreted as welfare changes.
-
-For comparisons across price signals, every dispatch is additionally
-re-evaluated using the same operational cost metric:
-
-
-\begin{equation}
-\begin{aligned}
-C_s^{\mathrm{common}}={}&\sum_{t\in\timesteps}\Big[
-  \big(c_t^{\mathrm{el}}g_{t,s}^{\mathrm{el}}\\
- &+\mathrm{MC}_t^{\mathrm{heat}}g_{t,s}^{\mathrm{DH}}\big)\Delta t
-   +\sum_{i\in\hpset}c^{\mathrm{su},i}z_{t,s}^{i}\Big].
-\end{aligned}
-\label{eq:common_operational_cost}
-\end{equation}
-
-
-Here, the unbounded marginal heat cost $\mathrm{MC}_t^{\mathrm{heat}}$ is used
-consistently to value imported heat in every scenario, whereas the
-scenario-specific price $c_{t,s}^{\mathrm{DH}}$ is used only to generate the dispatch.
-A positive difference
-$C_a^{\mathrm{common}}-C_b^{\mathrm{common}}$ indicates that scenario $b$
-satisfies the same heat demand at a lower estimated operational resource cost.
-The metric is interpreted as an operational system-cost proxy rather than as a
-complete measure of societal welfare.
-
-\subsubsection{Technical robustness}
-
-Technical robustness is assessed by varying the PTES standing-loss rate
-$\lambda$ and the principal flexibility parameters, including the ramp limit
-$r^{\mathrm{PTES}}$ and minimum active charging and discharging levels
-$\underline{p}^{\mathrm{ch}}$ and $\underline{p}^{\mathrm{dis}}$. Documented low, base, and high
-values are tested individually while all other assumptions remain unchanged.
-The scenarios are compared using PTES cycles and throughput, operating hours,
-district-heat imports, heat-pump production and electricity consumption,
-$C_s^{\mathrm{HT}}$, $P_s^{\mathrm{DH}}$, and $C_s^{\mathrm{common}}$.
