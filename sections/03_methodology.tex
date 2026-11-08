@@ -40,7 +40,7 @@ HTF's demand is met by the heat exchanger, PTES discharge and two local heat pum
     \quad \forall t \in \timesteps.
     \label{eq:local-balance}
 \end{equation}
-The heat exchanger has a minimum warm-keeping flow and shares a connection capacity with PTES charging, $\underline{f}^{\mathrm{HX}}\le f^{\mathrm{HX}}_t$ and $f^{\mathrm{HX}}_t+p^{\mathrm{ch}}_t\le\overline{f}^{\mathrm{HX}}$. The City2 and groundwater heat pumps, $i\in\hpset=\{\mathrm{c2},\mathrm{gw}\}$, convert electricity $p^i_t$ into heat $q^i_t=COP^i_t\,p^i_t$. They are committable units with a minimum load of 25\%, minimum up- and down-times of two hours and start-up costs from the Danish Energy Agency technology catalogue \cite{dea2026technologycatalogue}. Hourly COPs follow from ambient temperature through HTF's supply-temperature curves (\cref{app:cop}).
+The heat-exchanger station towards HTF has a minimum warm-keeping flow and a maximum capacity, $\underline{f}^{\mathrm{HX}}\le f^{\mathrm{HX}}_t\le\overline{f}^{\mathrm{HX}}$. PTES charging is supplied through a separate branch from the transmission line and is limited by its own power rating. The City2 and groundwater heat pumps, $i\in\hpset=\{\mathrm{c2},\mathrm{gw}\}$, convert electricity $p^i_t$ into heat $q^i_t=COP^i_t\,p^i_t$. They are committable units with a minimum load of 25\%, minimum up- and down-times of two hours and start-up costs from the Danish Energy Agency technology catalogue \cite{dea2026technologycatalogue}. Hourly COPs follow from ambient temperature through HTF's supply-temperature curves (\cref{app:cop}).
 
 \paragraph{PTES}
 The PTES inventory evolves as
@@ -175,7 +175,7 @@ Hourly CTR and VEKS demand and waste output for 2024 are taken from Varmelast's 
         Standing loss $\lambda$ & 0.0275\,\%/h & Matches metered 2024 losses \\
         Start/end inventory $e^{\mathrm{start}}$, $e^{\mathrm{end}}$ & Measured & Per period, all cases \\
         Pumping $\kappa$ & 0.005 MWh$_{\mathrm{el}}$/MWh$^{\dagger}$ & Per charged and per discharged MWh \\
-        Heat exchanger $\underline{f}^{\mathrm{HX}}$ / $\overline{f}^{\mathrm{HX}}$ & 0.5 / 100 MW & Shared with charging \\
+        Heat exchanger $\underline{f}^{\mathrm{HX}}$ / $\overline{f}^{\mathrm{HX}}$ & 0.5 / 100 MW & Station towards HTF \\
         Heat pumps (City2 / groundwater) & 1.34 / 1.50 MW$_{\mathrm{th}}$ & COP 3.1--3.6 / 3.0--3.3 \\
         Electricity adder $c^{\mathrm{add}}$ & 125 DKK/MWh$^{\dagger}$ & Grid tariffs and taxes \\
         Transmission delivery factor $r$ & 0.98$^{\dagger}$ & \\
