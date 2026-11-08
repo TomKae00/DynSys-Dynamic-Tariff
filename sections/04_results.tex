@@ -43,7 +43,9 @@ All results cover the 52 weeks of 2024 and are reported relative to the measured
 \subsection{Annual effect and distribution}
 \label{sec:results-annual}
 
-\Cref{tab:annual-results} summarises the annual results and \cref{fig:annual-weeks} their weekly distribution. The measured operation corresponds to 29.8~GWh of discharge, or 9.0 equivalent full cycles, and the coordinated schedule to 66.5~GWh, or 20.2 cycles. The cost difference between the two, the coordination value, is 4.86~MDKK. HTF's optimal response to the monthly tariff discharges 11.6~GWh, since discharge does not reduce its payment; its system cost lies 0.87~MDKK below the measured operation. This difference also reflects that the measured operation was scheduled with forecasts, whereas all model cases are evaluated with perfect foresight.
+\Cref{tab:annual-results} summarises the annual results and \cref{fig:annual-weeks} their weekly distribution. The measured operation corresponds to 29.8~GWh of discharge, or 9.0 equivalent full cycles, and the coordinated schedule to 66.5~GWh, or 20.2 cycles. The cost difference between the two, the coordination value, is 4.86~MDKK. It is the largest saving any tariff can achieve in the model.
+
+The monthly-tariff response shows which operation the current settlement rewards. Since discharge does not reduce HTF's payment and adds pumping cost, HTF's cost-minimising operation uses the store only as far as the measured end-of-week inventory requires: in 48 of the 52 weeks it either only charges or only discharges, and in 17 weeks it does not discharge at all. It discharges 11.6~GWh over the year, less than the measured operation. Its system cost is nevertheless 0.87~MDKK lower than that of the measured operation, which mainly reflects that the measured operation was scheduled with forecasts, whereas all model cases are evaluated with perfect foresight. The tariff cases are therefore compared with the measured operation, and the monthly-tariff response indicates how much of the saving arises in the model without any credit.
 
 \begin{table}[!htb]
     \centering
@@ -52,9 +54,9 @@ All results cover the 52 weeks of 2024 and are reported relative to the measured
     \label{tab:annual-results}
     \begin{tabular}{lrrrrrr}
         \toprule
-        & No credit & Constant & Hourly & \multicolumn{3}{c}{Value share $s$} \\
+        & Monthly-tariff & Constant & Hourly & \multicolumn{3}{c}{Value share $s$} \\
         \cmidrule(lr){5-7}
-        & (benchmark) & 5 DKK/MWh & credit & 0.25 & 0.5 & 1 \\
+        & response & 5 DKK/MWh & credit & 0.25 & 0.5 & 1 \\
         \midrule
         System saving $\Delta C^{\mathrm{sys}}$ & 0.87 & 3.36 & 3.83 & 3.07 & 3.45 & 3.93 \\
         HTF bill saving $\Delta B^{\mathrm{HTF}}$ & 0.09 & 0.29 & 0.47 & 0.45 & 0.90 & 1.85 \\
@@ -68,12 +70,37 @@ All results cover the 52 weeks of 2024 and are reported relative to the measured
     \end{tabular}
 \end{table}
 
-The hourly credit increases discharge to 63.6~GWh (19.3 cycles) and reduces system cost by 3.83~MDKK, or 79\% of the coordination value. The constant credit with the same mean reduces it by 3.36~MDKK; the difference of 0.47~MDKK is attributable to the timing of the credit. Under the hourly credit, HTF's bill falls by 0.47~MDKK. The upstream side receives 0.51~MDKK less heat revenue but saves more in operating cost, so its aggregate gain is 3.36~MDKK. HTF gains in every week; the upstream side gains in 50 of 52 weeks, and its losses in the remaining two summer weeks total 2.8~kDKK. \Cref{fig:annual-weeks}a shows that the weekly savings follow the weekly coordination value, which varies between 4 and 340~kDKK per week.
+The hourly credit increases discharge to 63.6~GWh (19.3 cycles) and reduces system cost by 3.83~MDKK, or 79\% of the coordination value. The constant credit with the same mean reduces it by 3.36~MDKK; the difference of 0.47~MDKK is attributable to the timing of the credit. Under the hourly credit, HTF's bill falls by 0.47~MDKK. The upstream side receives 0.51~MDKK less heat revenue but saves more in operating cost, so its aggregate gain is 3.36~MDKK. HTF gains in every week; the upstream side gains in 50 of 52 weeks, and its losses in the remaining two summer weeks total 2.8~kDKK. \Cref{fig:annual-weeks}a shows that the weekly savings follow the weekly coordination value, which varies between 4 and 340~kDKK per week; the saving is spread over the whole year, with 1.0, 0.7, 1.0 and 1.1~MDKK in the four quarters. \Cref{fig:annual-weeks}b shows that HTF's weekly discharge under the hourly credit is close to the coordinated schedule throughout the year, whereas under the monthly tariff it is zero in many weeks.
+
+The agreement with the schedule also holds hour by hour, although HTF is free to deviate from it (\cref{sec:response}). Under the hourly credit, the hourly net PTES flow of HTF's response has a correlation of 0.94 with the coordinated schedule and lies within 1~MW of it in 75\% of the hours; the absolute deviation summed over the year is 23~GWh, compared with 40~GWh under the constant credit and 118~GWh under the monthly-tariff response. The hourly credit thus makes the scheduled operation HTF's own least-cost operation in most hours, without an obligation to follow the schedule.
+
+\Cref{tab:production} shows how the system changes physically. The additional discharge of 34~GWh under the hourly credit replaces direct supply through the heat exchanger, and the store is charged correspondingly more. Total upstream heat production remains almost unchanged, but its composition shifts: gas-fired peak boilers produce 9.8~GWh less, electric boilers and the regional heat pump 4.8~GWh less, and CHP plants 11.9~GWh more, with less bypass operation. The store is thus charged in hours in which CHP heat is available at low cost and discharged in hours in which peak units would otherwise be needed. Each additional MWh of discharge reduces the system operating cost by about 110~DKK, whereas the credit paid to HTF averages about 8~DKK per MWh discharged. For comparison, HTF's annual heat expenditure is about 104~MDKK, so its saving of 0.47~MDKK corresponds to 0.5\%.
+
+\begin{table}[!htb]
+    \centering
+    \small
+    \caption{Change in annual heat production and PTES flows relative to the measured operation [GWh].}
+    \label{tab:production}
+    \begin{tabular}{lrrrrr}
+        \toprule
+        & Monthly-tariff & Constant & Hourly & Value share & Coordinated \\
+        & response & 5 DKK/MWh & credit & $s=1$ & schedule \\
+        \midrule
+        PTES discharge & $-18.2$ & 32.4 & 33.9 & 33.5 & 36.7 \\
+        Direct supply via heat exchanger & 18.2 & $-32.4$ & $-33.8$ & $-32.9$ & $-29.5$ \\
+        CHP plants & 0.9 & 8.5 & 11.9 & 12.4 & 20.6 \\
+        Gas peak boilers & $-1.1$ & $-5.9$ & $-9.8$ & $-9.8$ & $-11.6$ \\
+        Biomass peak boilers & 0.7 & 2.6 & 2.9 & 2.8 & 3.1 \\
+        Electric boilers and regional heat pump & $-0.4$ & $-5.0$ & $-4.8$ & $-4.7$ & $-4.7$ \\
+        HTF heat pumps & 0.0 & 0.0 & 0.0 & $-0.6$ & $-7.2$ \\
+        \bottomrule
+    \end{tabular}
+\end{table}
 
 \begin{figure}[!htb]
     \centering
     \includegraphics[width=\linewidth]{figures/04_Results/annual_weeks.pdf}
-    \caption{Weekly results for 2024. (a) Operating saving of the hourly credit relative to the measured operation, divided into upstream gain and HTF bill saving, and weekly coordination value. (b) Weekly PTES discharge in the coordinated schedule, in HTF's response to the hourly credit, in the measured operation and in HTF's optimal response to the monthly tariff.}
+    \caption{Weekly results for 2024. (a) Operating saving of the hourly credit relative to the measured operation, divided into upstream gain and HTF bill saving, and weekly coordination value. (b) Weekly PTES discharge in the coordinated schedule, in HTF's response to the hourly credit, in the measured operation and in the monthly-tariff response, i.e.\ HTF's optimal operation under the current settlement without credit.}
     \label{fig:annual-weeks}
 \end{figure}
 
@@ -92,4 +119,4 @@ The hourly credit increases discharge to 63.6~GWh (19.3 cycles) and reduces syst
 \subsection{Local heat pumps}
 \label{sec:results-hp}
 
-Under the hourly credit, 1.03~MDKK (21\%) of the coordination value is not recovered. PTES discharge reaches 96\% of the coordinated schedule, so the remainder is mainly associated with HTF's heat pumps: they produce 17.0~GWh in HTF's response and 9.9~GWh in the coordinated schedule. The difference occurs from March to December and is largest from April to October, when the monthly mean marginal value of delivered heat lies 120--280~DKK/MWh below the monthly tariff. Local production is then cheaper for HTF than direct supply, but more expensive for the system.
+Under the hourly credit, 1.03~MDKK (21\%) of the coordination value is not recovered. PTES discharge reaches 96\% of the coordinated schedule, so the remainder is mainly associated with HTF's heat pumps: they produce 17.0~GWh in the measured reference and in all responses, and 9.9~GWh in the coordinated schedule (\cref{tab:production}). The difference occurs from March to December and is largest from April to October, when the monthly mean marginal value of delivered heat lies 120--280~DKK/MWh below the monthly tariff. Local production is then cheaper for HTF than direct supply, but more expensive for the system.
