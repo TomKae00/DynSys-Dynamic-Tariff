@@ -31,7 +31,7 @@
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{enumerate}
-\usepackage{amsmath, amssymb}
+\usepackage{amsmath} % amssymb symbols come with newtxmath
 \usepackage{mathtools}
 \usepackage{array}
 \usepackage{booktabs}
@@ -139,3 +139,7 @@
 \setcounter{biburlnumpenalty}{9000}
 \setcounter{biburlucpenalty}{9000}
 \setcounter{biburllcpenalty}{9000}
+% ----------- MODEL NOTATION AND TIKZ LIBRARIES --------------
+\providecommand{\timesteps}{\mathcal{T}}
+\usepackage{tikz-layers}
+\usetikzlibrary{positioning,arrows.meta,calc,backgrounds,fit,shapes,shapes.geometric,shapes.arrows,patterns,decorations.pathreplacing,decorations.markings}

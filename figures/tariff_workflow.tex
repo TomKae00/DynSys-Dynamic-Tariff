@@ -1,0 +1,79 @@
+\documentclass[border=2mm]{standalone}
+\usepackage{tikz}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usetikzlibrary{positioning,arrows.meta,calc,backgrounds,fit}
+
+\begin{document}
+
+\definecolor{npgred}{HTML}{DC0000}
+\definecolor{npgblue}{HTML}{3C5488}
+\definecolor{softgrey}{HTML}{F4F4F4}
+\definecolor{darkgrey}{HTML}{555555}
+
+\begin{tikzpicture}[
+    font=\footnotesize,
+    >=Latex,
+    dataflow/.style={-{Latex[length=2.2mm]}, thick, dashed, draw=npgblue!85},
+    stageflow/.style={-{Latex[length=2.4mm]}, very thick, draw=npgred!80},
+    flow/.style={-{Latex[length=2.2mm]}, thick, draw=darkgrey},
+    input/.style={draw=npgblue!70, fill=npgblue!7, rounded corners=3pt,
+        text width=3.4cm, minimum height=0.68cm, inner sep=4pt, align=center},
+    stage/.style={draw=npgred!65, fill=npgred!4, rounded corners=4pt,
+        text width=5.0cm, inner sep=5pt, align=center},
+    result/.style={draw=black!38, fill=white, rounded corners=3pt,
+        text width=3.3cm, minimum height=0.68cm, inner sep=4pt, align=center}
+]
+
+% Inputs ---------------------------------------------------------------
+\node[font=\bfseries, text=npgblue!90!black, align=center] (inT) at (0,4.35) {External data\\and assumptions};
+\node[input] (vl)  at (0,3.20) {CTR/VEKS heat demand,\\waste heat output};
+\node[input] (el)  at (0,1.85) {DK2 electricity\\price $c^{\mathrm{el}}_t$};
+\node[input] (pl)  at (0,0.50) {CHP, boiler, heat pump\\and accumulator data};
+\node[input] (loc) at (0,-0.85) {HTF demand $d_t$, COPs,\\PTES limits, tariff $\tau_m$};
+
+% Stages -----------------------------------------------------------------
+\node[stage] (s1) at (6.0,3.55) {\textbf{1\;Coordinated schedule}\\[1pt]
+    $\min C^{\mathrm{sys}}$ (MILP), whole system\\[2pt]
+    \scriptsize announced charging $p^{\mathrm{ch},\star}_t$;\\
+    \scriptsize values $\mu_t$, $v_t$ (modes fixed, LP)};
+\node[stage, below=0.55cm of s1] (s2) {\textbf{2\;Tariff derivation}\\[1pt]
+    $\delta^{\star}_t=\mu_t/r - v_t/\eta^{\mathrm{dis}}$\\[1pt]
+    \scriptsize bounded, monthly-mean credit $\delta_t$;\\
+    \scriptsize discharge price $\pi^{\mathrm{D}}_t=\tau_m-\delta_t$};
+\node[stage, below=0.55cm of s2] (s3) {\textbf{3\;HTF response}\\[1pt]
+    $\min C^{\mathrm{HTF}}$ (MILP): HX import, PTES\\discharge and local heat pumps\\[1pt]
+    \scriptsize charging $\le p^{\mathrm{ch},\star}_t$};
+\node[stage, below=0.55cm of s3] (s4) {\textbf{4\;Corrective dispatch}\\[1pt]
+    $\min C^{\mathrm{sys}}$ with HTF decisions fixed};
+
+\draw[stageflow] (s1) -- (s2);
+\draw[stageflow] (s2) -- (s3);
+\draw[stageflow] (s3) -- (s4);
+
+% Results ------------------------------------------------------------------
+\node[font=\bfseries, text=black!78] (resT) at (12.0,4.35) {Evaluation};
+\node[result] (r1) at (12.0,3.20) {PTES throughput,\\timing and losses};
+\node[result] (r2) at (12.0,1.85) {System operating\\cost saving $\Delta C^{\mathrm{sys}}$};
+\node[result] (r3) at (12.0,0.50) {HTF bill saving and\\upstream aggregate gain};
+\node[result] (r4) at (12.0,-0.85) {Recovered share of the\\coordination value $\rho$};
+
+\begin{scope}[on background layer]
+\node[draw=black!28, fill=softgrey, rounded corners=5pt, fit=(inT)(vl)(loc), inner sep=0.25cm] (inP) {};
+\node[draw=black!28, fill=softgrey, rounded corners=5pt, fit=(resT)(r1)(r4), inner sep=0.25cm] (resP) {};
+\end{scope}
+
+\draw[dataflow] (vl.east) -- ++(0.7,0) |- ([yshift=0.25cm]s1.west);
+\draw[dataflow] (el.east) -- ++(1.0,0) |- ([yshift=-0.10cm]s1.west);
+\draw[dataflow] (pl.east) -- ++(1.3,0) |- ([yshift=-0.45cm]s1.west);
+\draw[dataflow] (loc.east) -- ++(1.6,0) |- (s3.west);
+\draw[dataflow] (s1.east) -- ++(0.45,0) |- ([yshift=0.30cm]s4.east);
+\draw[flow] (s4.east) -- ++(0.95,0) |- (resP.west);
+
+\node[draw=npgblue!55, fill=npgblue!5, rounded corners=4pt, text width=14.5cm,
+    inner sep=5pt, font=\scriptsize, align=center, below=0.45cm of s4] {
+    \textbf{One-pass coupling:} prices are frozen from Stage~1; HTF optimises its own bill
+    (Stage~3) and the upstream system adapts within the announced charging slots (Stage~4).
+    Every case shares the same inputs, physical limits and PTES end inventories.};
+\end{tikzpicture}
+\end{document}
