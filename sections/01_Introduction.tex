@@ -1,10 +1,26 @@
+% the utilization itself is not highly dependent on the underlying pricing structure, in our case it is dependent on it, since we have two player in the system. Therefore it is better to reformulate this part. 
+
+\begin{abstract}
+%Pit thermal energy storage (PTES) can provide district-heating flexibility by shifting heat supply across time, but existing tariffs may provide insufficient incentives for its utilisation. Under a monthly tariff, local operators do not observe hourly variations in upstream production costs. Charging storage therefore offers little advantage over direct heat imports, while thermal losses further discourage cycling.
+
+Pit thermal energy storage (PTES) can provide district-heating flexibility by shifting heat production relative to heat demand. In systems with combined heat and power (CHP) generation, it allows heat to be produced and stored when electricity prices are high and the value of co-produced electricity makes CHP operation particularly attractive. However, existing tariff structures may not transmit this time-varying system value to local storage operators. Under a monthly tariff, hourly variations in upstream heat-production costs are not reflected in the price paid by the local operator. Consequently, the tariff provides little economic incentive to charge and discharge the storage in response to these variations, while thermal losses further discourage cycling.
+
+This paper develops a method for determining a dynamic heat tariff and evaluates whether it improves PTES utilisation. The hourly tariff is derived from the marginal heat cost of an upstream biomass combined heat and power plant, accounting for fuel and operating costs, carbon costs, conversion efficiencies, and the market value of co-produced electricity. % A fixed/revenue adjustment component supports cost recovery without changing the marginal dispatch signal. (Possible idea, lets see) 
+
+The tariff is soft-linked to an hourly mixed integer model of the Høje Taastrup district heating system, jointly optimising direct heat imports, a 3.3~GWh PTES, and two heat pumps under realistic operating constraints. Using 2024 heat-demand and electricity price data, the dynamic tariff is compared with the incumbent monthly VEKS tariff and an unconstrained PTES benchmark.
+
+%\textbf{Include another paragraph about the results}
+\end{abstract}
+
+
+
 \section{Introduction}
 
 Thermal energy storage is a key enabler for flexible and efficient operation of district heating systems. In particular, PTES allows heat production and consumption to be decoupled in time, thereby increasing operational flexibility and supporting the integration of variable energy sources.
 
 However, the operational value of PTES depends strongly on the economic signals faced by the storage operator. In practice, tariff structures may not reflect the underlying marginal costs of heat generation. This can reduce the incentive for economically efficient charging and discharging and may lead to underutilization of available storage capacity.
 
-The district heating (DH) system of the Greater Copenhagen area is a complex interconnected system that consists of multiple heat producers and network operators. Utility companies operate large-scale combined heat and power (CHP) plants burning biomass that operate on both electricity and heat markets, waste incineration plants whose excess heat is being fed into the DH system, as well as numerous short-term-operated thermal energy storage (TES) systems, gas plants, and heat pumps that are designed to meet peak demand. The heat is being bought by a central dispatch operator, Varmelast, that optimises the heat production in the area to minimise total system costs. It includes transmission operators that transport heat from some of the major heat producers to the distribution operators, whose role is to provide heat to the end users in the municipality.
+The district heating (DH) system of the Greater Copenhagen area is a complex interconnected system that consists of multiple heat producers and network operators. Utility companies operate large-scale combined heat and power (CHP) plants burning biomass that operate on both electricity and heat markets, waste incineration plants whose excess heat is being fed into the DH system, as well as numerous short-term-operated thermal energy storage (TES) systems, gas plants, and heat pumps that are designed to meet peak demand. The heat is being bought by a central dispatch operator, Varmelast, that optimises the heat production in the area to minimise total system costs. It includes transmission operators that transport heat from some of the major heat producers to the distribution operators, whose role is to provide heat to the end users in the municipality. 
 
 The Høje Taastrup PTES is a large-scale TES system in the area, and was introduced to store heat supplied by the transmission pipe for later use inside the distribution subsystem. However, despite its large capital expenditure of more than 12 million \texteuro ~\cite{sifnaios2025performance}, it has been under-utilized so far, which means that more expensive heat pumps or even gas or oil boilers have to be turned on to meet the heat demand, leading to higher system costs. Despite the heat generation being tightly coupled to the electricity market, the district heating distribution operators have only a monthly-varying heat price, therefore, not provide economic incentives for distribution operators to fully utilize the PTES system.
 
@@ -26,7 +42,7 @@ The evaluation distinguishes HTF's operating expenditure, upstream heat-sale rev
 % \textbf{Possible research question}
 
 % \begin{itemize}
-%     \item Develop a dynamic heat price for the Greater Copenhagen area based on marginal pricing.
+%     \item Develop a dynamic heat price for the Greater Copenhagen area based on marginal pricing. 
 %     \item Show how a dynamic heat price for DH operators leads to a higher utilization of the PTES system
 %     \item Can a dynamic heat price lead to lower total system costs?
 % \end{itemize}

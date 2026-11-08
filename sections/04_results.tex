@@ -6,12 +6,12 @@ This section compares the observed operation of the PTES under current operating
 
 To assess how the PTES is currently operated, measured operational data for the year 2024 are analysed. Figure~\ref{fig:ptes_real_soc} shows the observed state of charge over the year.
 
-\begin{figure*}[tbp]
+\begin{figure}[H]
     \centering
-    \includegraphics[width=\linewidth]{figures/paper_figure/ptes_soc_hourly.png}
+    \includegraphics[width=0.9\linewidth]{figures/paper_figure/ptes_soc_hourly.png}
     \caption{Observed state of charge of the PTES based on measured operational data for 2024.}
     \label{fig:ptes_real_soc}
-\end{figure*}
+\end{figure}
 
 The observed operation corresponds to approximately 10 full equivalent cycles per year, defined as the ratio of total discharged heat to usable storage capacity. This is below the intended operational range of approximately 25--30 cycles per year and indicates that the storage is currently not utilized to its full technical potential.
 
@@ -19,7 +19,7 @@ The observed operation is used as a reference for the current dispatch behaviour
 
 \subsection{Optimized operation under the fixed tariff}
 
-To distinguish the effect of operational optimization from the effect of tariff design, an optimized reference scenario is first established using the existing fixed heat tariff. The model uses the same 2024 heat demand, electricity prices, component capacities, efficiencies and technical operating constraints as the alternative tariff scenarios. Only the heat tariff used to determine the optimal dispatch differs between scenarios.
+To distinguish the effect of operational optimization from the effect of tariff design, an optimized reference scenario is first established using the existing fixed heat tariff. The model uses the same 2024 heat demand, electricity prices, component capacities, efficiencies and technical operating constraints as the alternative tariff scenarios. Only the heat tariff used to determine the optimal dispatch differs between scenarios. 
 
 The optimized fixed tariff scenario therefore represents the operation that would result if the Høje Taastrup system responded optimally to the existing tariff structure. It provides a more appropriate benchmark for evaluating alternative tariffs than the observed 2024 operation alone. A comparison with observed operation captures the combined effect of optimization and tariff design, whereas a comparison between two optimized scenarios isolates the effect of the tarif signal.
 
@@ -35,7 +35,7 @@ The relatively low number of PTES cycles indicates that the fixed tariff provide
 
 Using the dynamic marginal heat price as input, the model exhibits economically driven charging and discharging behaviour. To assess the impact of the technical PTES operating constraints, the constrained model is compared with an unconstrained benchmark. Both model versions use the same input data and dynamic heat price signal, but only the constrained model enforces minimum active operating levels, ramp-rate limits, mutually exclusive charging and discharging, and switching restrictions.
 
-\begin{table*}[tbp]
+\begin{table}[H]
 \centering
 \caption{Comparison of unconstrained and constrained PTES operation.}
 \label{tab:ptes_constraint_comparison}
@@ -43,7 +43,7 @@ Using the dynamic marginal heat price as input, the model exhibits economically 
 \toprule
 Metric & Unconstrained model & Constrained model \\
 \midrule
-Local operating expenditure [DKK] & 40,783,716 & 42,350,531 \\
+Total system cost [DKK] & 40,783,716 & 42,350,531 \\
 Heat charged into PTES [MWh] & 115,605 & 85,862 \\
 Heat discharged from PTES [MWh] & 106,553 & 75,640 \\
 Equivalent full cycles [-] & 32.29 & 22.92 \\
@@ -53,24 +53,24 @@ Hours below minimum operating level & 221 & 0 \\
 Ramp-rate violations & 1,926 & 0 \\
 \bottomrule
 \end{tabular}
-\end{table*}
+\end{table}
 
 The constrained model results in 22.92 full equivalent cycles. Although this is slightly below the intended operational range of approximately 25--30 cycles per year, it is substantially higher than the approximately 10 cycles observed under current operating practice. This indicates that the dynamic price signal creates a relevant incentive for PTES utilization, even when more restrictive and technically plausible operating constraints are included.
 
-The constrained model leads to a higher local operating expenditure, which is expected because the additional operating constraints reduce the feasible dispatch space. The local operating expenditure increases from approximately DKK~40.78 million to DKK~42.35 million, corresponding to an increase of approximately 3.8\%. These expenditure figures should not be interpreted as representative real-world system costs, but they show the expected direction of change when moving from an idealized unconstrained dispatch to a more technically restricted operation.
+The constrained model leads to a higher total system cost, which is expected because the additional operating constraints reduce the feasible dispatch space. The total system cost increases from approximately DKK~40.78 million to DKK~42.35 million, corresponding to an increase of approximately 3.8\%. These costs should not be interpreted as representative real-world system costs, but they show the expected direction of change when moving from an idealized unconstrained dispatch to a more technically restricted operation.
 
 The constrained model charges and discharges considerably less heat than the unconstrained model. This leads to fewer equivalent full cycles and a slightly lower round-trip efficiency. The lower storage throughput reflects that the PTES cannot always respond immediately to the price signal, as its operation is restricted by minimum active power levels, ramp-rate limits, and switching constraints. In addition, the constrained model may keep energy stored for longer periods, which increases the relevance of standing losses. At the same time, the constraints remove simultaneous charging and discharging, operation below the specified minimum operating levels, and all ramp-rate violations, resulting in a more technically plausible dispatch.
 
 \subsection{Effect of technical PTES operating constraints}
 
-Figure~\ref{fig:ptes_soc_comparison} compares the state of charge of the unconstrained and constrained models.
+Figure~\ref{fig:ptes_soc_comparison} compares the state of charge of the unconstrained and constrained models. 
 
-\begin{figure*}[tbp]
+\begin{figure}[H]
     \centering
-    \includegraphics[width=\linewidth]{figures/04_Results/comparison_ptes_soc_full.png}
+    \includegraphics[width=0.9\linewidth]{figures/04_Results/comparison_ptes_soc_full.png}
     \caption{Comparison of PTES state of charge in the unconstrained and constrained model.}
     \label{fig:ptes_soc_comparison}
-\end{figure*}
+\end{figure}
 
 The constrained model often keeps the PTES at a higher storage level than the unconstrained model. This indicates that the technical constraints reduce the flexibility to discharge heat immediately, so more energy remains stored for longer periods.
 
@@ -78,12 +78,12 @@ The main operational difference is that the constrained model removes unrealisti
 
 This effect is particularly visible in the zoomed operation plot in Figure~\ref{fig:ptes_operation_comparison}. Positive values indicate discharging, while negative values indicate charging. The constrained model changes more gradually between charging and discharging, whereas the unconstrained model switches more abruptly. This reflects the effect of the ramp-rate and no-reversal constraints.
 
-\begin{figure*}[tbp]
+\begin{figure}[H]
     \centering
-    \includegraphics[width=\linewidth]{figures/04_Results/comparison_ptes_net_operation_zoom.png}
+    \includegraphics[width=0.9\linewidth]{figures/04_Results/comparison_ptes_net_operation_zoom.png}
     \caption{Zoomed comparison of PTES net operation in the unconstrained and constrained model. Positive values indicate discharging, while negative values indicate charging.}
     \label{fig:ptes_operation_comparison}
-\end{figure*}
+\end{figure}
 
 The current constrained model includes a two-hour no-reversal rule, but it does not yet include the full transition requirement between full charging and full discharging. The implementation of this additional restriction is therefore considered a relevant next step for further model refinement.
 
@@ -98,14 +98,14 @@ Under the constrained formulation, the two heat pumps produce a combined 12,191~
 
 The higher heat production in the constrained case is therefore primarily caused by increased utilization rather than a change in conversion efficiency. The City2 capacity factor increases from 37.56\% to 50.15\%, while the groundwater heat-pump capacity factor increases from 36.20\% to 47.72\%. The City2 heat pump retains the higher seasonal COP, whereas the larger thermal capacity of the groundwater heat pump results in a slightly higher annual heat output.
 
-\begin{table*}[tbp]
+\begin{table}[H]
     \centering
     \small
     \caption{Comparison of annual heat-pump operation in the unconstrained and constrained formulations.}
     \label{tab:hp_constraint_comparison}
     \begin{tabular}{lrrrr}
         \toprule
-        & \multicolumn{2}{c}{City2}
+        & \multicolumn{2}{c}{City2} 
         & \multicolumn{2}{c}{Groundwater} \\
         \cmidrule(lr){2-3}\cmidrule(lr){4-5}
         Metric
@@ -126,47 +126,47 @@ The higher heat production in the constrained case is therefore primarily caused
             & 3,462 & 4,683 & 3,330 & 4,413 \\
         \bottomrule
     \end{tabular}
-\end{table*}
+\end{table}
 
 Figure~\ref{fig:hp_load_duration} shows the load-duration curves of the constrained heat-pump dispatch. Both heat pumps operate either close to full load or at their minimum permissible load during almost all active hours. City2 operates near full load during 91.9\% of its operating hours and near the minimum load during 7.7\%. The corresponding shares for the groundwater heat pump are 93.1\% and 6.5\%. Intermediate part-load operation accounts for less than 0.5\% of the operating hours for either unit.
 
-\begin{figure*}[tbp]
+\begin{figure}[H]
     \centering
-    \includegraphics[width=\linewidth]
+    \includegraphics[width=0.9\linewidth]
     {figures/04_Results/heat_pump_load_duration_curve.png}
     \caption{Load-duration curves of the normalized electrical input of the City2 and groundwater heat pumps in the constrained model. The dashed line indicates the minimum permissible load of 25\%.}
     \label{fig:hp_load_duration}
-\end{figure*}
+\end{figure}
 
 The load-duration curves confirm that the minimum-load constraint is respected. However, they also show that the optimized dispatch remains strongly concentrated at the boundaries of the feasible operating range. This behaviour is consistent with a cost-minimizing formulation with linear operating costs: when operation is economically favourable, full-load production is generally selected, while the minimum load is mainly used to satisfy the commitment constraints. The constrained formulation therefore improves the technical consistency of the dispatch but does not by itself reproduce continuously modulated real-world heat-pump operation.
 
 The temporal distribution of heat production and starts is presented in Figure~\ref{fig:hp_monthly_operation}. Heat production is highest in February and March for both heat pumps and generally lower during summer and autumn. The number of starts does not follow the same pattern. Starts are most frequent between June and August, despite the lower monthly heat production during this period. This indicates shorter and more fragmented operating periods during the middle of the year, while the higher winter production is achieved through longer continuous runs.
 
-\begin{figure*}[tbp]
+\begin{figure}[H]
     \centering
-    \includegraphics[width=\linewidth]
+    \includegraphics[width=0.9\linewidth]
     {figures/04_Results/heat_pump_monthly_production_and_starts.png}
     \caption{Monthly heat production and number of starts for the City2 and groundwater heat pumps in the constrained model. Bars show heat production and lines show the number of starts.}
     \label{fig:hp_monthly_operation}
-\end{figure*}
+\end{figure}
 
 Over the full year, City2 records 188 starts and the groundwater heat pump records 190 starts. Their mean run durations are 24.8 and 23.1 hours, respectively, while the median run duration is eight hours for both units. No one-hour runs or violations of the minimum up- and down-times occur. The total modelled start-up costs amount to approximately DKK~42,580 across both heat pumps.
 
 These results demonstrate that the commitment constraints successfully remove very short operating periods and enforce the specified minimum loading. Nevertheless, the dominance of full-load operation and the remaining frequent large output changes show that the results represent economically optimized dispatch rather than a detailed reconstruction of the physical control strategy of the actual heat pumps.
 
-\begin{figure*}[tbp]
+\begin{figure}[H]
     \centering
-    \includegraphics[width=\linewidth]{figures/04_Results/heat_pump_production.png}
+    \includegraphics[width=0.9\linewidth]{figures/04_Results/heat_pump_production.png}
     \caption{Heat generation of the modelled heat pumps %\hl{I suspect it is too expensive computationally to add a quadratic penalty in the cost function for the heat pump?}
     }
     \label{fig:heat_pumps}
-\end{figure*}
+\end{figure}
 
 
 
 % \subsection{Heat Pump Operation \textbf{RESULTS FOR THE UNCONSTRAINED CASE, NEEDS TO BE UPDATED}}
 
-%
+% 
 
 % The model includes two heat pump technologies, both of which contribute to heat production under the current parameterisation. Their operation is determined endogenously by the optimisation and reflects the interaction between electricity prices, coefficient of performance, and system constraints.
 

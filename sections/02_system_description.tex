@@ -3,7 +3,7 @@
 
 \subsection{System configuration and institutional arrangements}
 
-The Høje Taastrup PTES connects the VEKS transmission network to the local distribution system operated by HTF. Heat for charging is supplied from the transmission network, while discharged heat serves local demand~\cite{planenergi_hoje_taastrup}. HTF can also receive transmission heat directly through heat exchangers and use local production. The heat demand available for PTES discharge therefore depends on local consumption, the operation of other heat sources and the distribution network's ability to receive the heat.
+The Høje Taastrup PTES connects the VEKS transmission network to the local distribution system operated by HTF. Heat for charging is supplied from the transmission network, while discharged heat serves local demand. HTF can also receive transmission heat directly through heat exchangers and use local production. The heat demand available for PTES discharge therefore depends on local consumption, the operation of other heat sources and the distribution network's ability to receive the heat.
 
 The PTES is jointly owned by VEKS and HTF, each holding a 50\% share. VEKS also holds the right to use HTF's share in exchange for annual compensation. Ownership, capacity rights and operational responsibilities must therefore be distinguished. Varmelast, the joint heat-dispatch organisation of CTR, VEKS and HOFOR, coordinates production across the interconnected Copenhagen district heating system. Its objective is to minimise variable supply costs while meeting heat requirements and respecting technical constraints.
 % Sources: https://planenergi.eu/de/projects/hoje-taastrup/
@@ -20,14 +20,14 @@ Many PTES installations serve as seasonal storage associated with solar thermal 
     \centering
     \begin{subfigure}[b]{0.45\linewidth}
         \centering
-        \resizebox{\linewidth}{!}{\input{figures/charge_body}}
+        \resizebox{\linewidth}{!}{\subfile{figures/charge}}
         \caption{Charging: upper inlet and lower outlet.}
         \label{fig:modes-of-operation-charge}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.45\linewidth}
         \centering
-        \resizebox{\linewidth}{!}{\input{figures/discharge_body}}
+        \resizebox{\linewidth}{!}{\subfile{figures/02_System_Description/discharge-1}}
         \caption{Discharging: upper outlet and lower inlet.}
         \label{fig:modes-of-operation-discharge-1}
     \end{subfigure}
@@ -46,7 +46,7 @@ Distribution utilities communicate expected hourly heat requirements through the
 % https://www.iea-dhc.org/fileadmin/documents/Annex_TS5/Final_Draft_Version/IEADHCAnnexTS5_DecentralRESCaseStudies.pdf
 % Morning forecast timing is omitted because the website and meeting slides differ.
 
-Storage scheduling compares the cost of charging with the value of retaining heat for later use. Varmelast began scheduling the PTES in January 2024, with an initial 24-hour forecasting horizon extended to seven days towards the end of that year \cite{sifnaios2025performance}. The planning material describes a forward-looking storage-value estimate; this should not be equated with a fully detailed seven-day dispatch optimisation.
+Storage scheduling compares the cost of charging with the value of retaining heat for later use. Varmelast began scheduling the PTES in January 2024, with an initial 24-hour forecasting horizon extended to seven days towards the end of that year \cite{sifnaios2025performance}. The planning material describes a forward-looking storage-value estimate; this should not be equated with a fully detailed seven-day dispatch optimisation. 
 % Meeting source: Damvarmelageret i HTF (VMP beregning), supplied presentation.
 % Confirm the precise division of control authority and schedule-revision duties.
 
@@ -56,10 +56,10 @@ Heat dispatch and financial settlement follow distinct arrangements. VEKS purcha
 
 According to stakeholder discussions, HTF pays the same monthly unit tariff for direct heat-exchanger supply and heat delivered through PTES discharge, while discharge entails additional local pumping expenditure. Replacing direct supply with PTES discharge consequently provides no unit heat-payment saving under this arrangement. If the incremental pumping expenditure is higher, implementing discharge can increase HTF's immediate operating expenditure even when it benefits the wider system. This identifies a potential marginal incentive mismatch; it does not establish that tariffs alone explain observed storage operation.
 
-According to stakeholder discussions, HTF also receives annual compensation associated with VEKS's right to use its share of storage capacity. This payment must be distinguished from the marginal financial incentive to deliver additional heat from storage. Its contractual coverage remains relevant when assessing whether a proposed discharge payment compensates additional operating costs or services already covered by the existing agreement.
+HTF also receives annual compensation associated with VEKS's right to use its share of storage capacity~\cite{planenergi_hoje_taastrup}. This payment must be distinguished from the marginal financial incentive to deliver additional heat from storage. Its contractual coverage remains relevant when assessing whether a proposed discharge payment compensates additional operating costs or services already covered by the existing agreement.
 
 The stakeholders therefore have related but distinct interests. Varmelast seeks feasible schedules and economical coordinated operation. HTF must meet local demand within network constraints while controlling operating expenditure. VEKS must assess any discharge discount against the benefits and costs accruing to it under the relevant supply contracts. Wider system savings and VEKS's financial benefit need not coincide. Tariff derivation must consequently distinguish the value of coordinated storage operation from the payments needed to make its local implementation financially attractive.
-% The costs used for dispatch differ from the prices governing transactions. Heat producers receive payments under separate heat-purchase contracts, while distribution companies face transmission tariffs. Varmelast describes monthly variable tariffs at VEKS and CTR. According to the meeting discussions, HTF faces the same heat tariff for direct transmission supply and PTES discharge, while discharge entails additional pumping expenditure. This arrangement may provide an insufficient marginal incentive to discharge when doing so benefits the wider system.
+% The costs used for dispatch differ from the prices governing transactions. Heat producers receive payments under separate heat-purchase contracts, while distribution companies face transmission tariffs. Varmelast describes monthly variable tariffs at VEKS and CTR. According to the meeting discussions, HTF faces the same heat tariff for direct transmission supply and PTES discharge, while discharge entails additional pumping expenditure. This arrangement may provide an insufficient marginal incentive to discharge when doing so benefits the wider system. 
 % % Sources: https://www.varmelast.dk/lastfordeling/hvad-er-lastfordeling
 % % https://www.varmelast.dk/lastfordeling/lastfordeling-af-lokal-produktion
 % % Equal tariffs for the two supply routes and pumping-cost allocation require
@@ -102,26 +102,26 @@ Reliable coordination requires feasible schedules, timely forecast updates and c
 
 % Most existing PTES systems have historically been applied as seasonal storage, often in combination with large solar thermal collector fields. In such systems, heat produced during periods of high solar availability is stored over longer periods and discharged when heat demand increases \cite{dahash2019seasonal}. The Høje Taastrup PTES differs from this traditional use case. It is connected directly to the district heating grid rather than to a solar thermal collector field and was designed for short-term operation with a storage cycle of around two weeks \cite{sifnaios2023shortterm}.
 
-% This short-term operating mode allows the storage to respond to changing system conditions, such as fluctuations in heat production costs, electricity prices, and local heat demand. Heat can be stored when it is cheap or available in excess and discharged when direct supply is more expensive or constrained. In contrast to classical seasonal PTES applications, the Høje Taastrup storage is therefore intended to operate as a flexible asset with frequent charging and discharging cycles. However, currently the PTES system is under-utilized, in part because there is a lack of economic incentives for the storage operator, given the flat DH pricing.
+% This short-term operating mode allows the storage to respond to changing system conditions, such as fluctuations in heat production costs, electricity prices, and local heat demand. Heat can be stored when it is cheap or available in excess and discharged when direct supply is more expensive or constrained. In contrast to classical seasonal PTES applications, the Høje Taastrup storage is therefore intended to operate as a flexible asset with frequent charging and discharging cycles. However, currently the PTES system is under-utilized, in part because there is a lack of economic incentives for the storage operator, given the flat DH pricing. 
 
 % This distinction is central for the optimization model developed in this paper, since the value of the storage depends on its ability to react to dynamic price signals while respecting technical operating constraints.
 
 % Figure~\ref{fig:modes-of-operation} illustrates the technically possible PTES operating modes. In addition to conventional charging and discharging through the top and bottom connections, the middle connection can be used to mix water streams and adjust the discharge temperature. However, these mixed operating modes are not used during normal operation of the Høje Taastrup PTES and are therefore not represented in the model. The model considers only conventional charging through the top inlet and bottom outlet (Mode~a) and discharging through the bottom inlet and top outlet (Mode~b).
 
-% % keep charge and discharge and only consider a) and b), how about operation c and d
+% % keep charge and discharge and only consider a) and b), how about operation c and d  
 
 % \begin{figure}[!htb]
 %     \centering
 %     \begin{subfigure}[b]{0.45\linewidth}
 %         \centering
-%         \resizebox{\linewidth}{!}{\input{figures/charge_body}}
+%         \resizebox{\linewidth}{!}{\subfile{figures/charge}}
 %         \caption{Charge, top inlet, bottom outlet}
 %         \label{fig:modes-of-operation-charge}
 %     \end{subfigure}
 %     \hfill
 %     \begin{subfigure}[b]{0.45\linewidth}
 %         \centering
-%         \resizebox{\linewidth}{!}{\input{figures/discharge_body}}
+%         \resizebox{\linewidth}{!}{\subfile{figures/02_System_Description/discharge-1}}
 %         \caption{Discharge, bottom inlet, top outlet}
 %         \label{fig:modes-of-operation-discharge-1}
 %     \end{subfigure}
