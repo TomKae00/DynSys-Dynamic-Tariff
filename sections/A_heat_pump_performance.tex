@@ -1,43 +1,31 @@
-\section{Heat-pump performance calculation}
+\section{Heat-pump performance}
 \label{app:cop}
 
-The heat-pump COPs are calculated exogenously using an adaptation of the
-central-heating COP approximation implemented in PyPSA-Eur~\cite{pypsaeur2025}.
-The approximation is based on Jensen et al.~\cite{jensen2018cop}, using the
-parameterisation evaluated by Pieper et al.~\cite{pieper2020cop}.
-For each $i\in\hpset$, the logarithmic mean absolute temperatures (in kelvin) are
-\begin{equation}
-\widetilde T_{j,t}^i
-=\frac{T_{j,t}^{i,\mathrm{hot}}-T_{j,t}^{i,\mathrm{cold}}}
-  {\ln\!\big(T_{j,t}^{i,\mathrm{hot}}/T_{j,t}^{i,\mathrm{cold}}\big)},
-\label{eq:log_mean_temperature}
-\end{equation}
-where $j\in\{\mathrm{sink},\mathrm{src}\}$ indexes the heat sink and source.
-The corresponding ideal Lorenz COP is
-\begin{equation}
-\mathrm{COP}_t^{\mathrm{L},i}
-=\frac{\widetilde T_{\mathrm{sink},t}^i}
-  {\widetilde T_{\mathrm{sink},t}^i-\widetilde T_{\mathrm{src},t}^i}.
-\label{eq:lorenz_cop}
-\end{equation}
-It is adjusted for refrigerant properties, heat-exchanger pinch temperature,
-and compressor efficiency:
-\begin{equation}
-\begin{aligned}
-\mathrm{COP}_t^i={}&\mathrm{COP}_t^{\mathrm{L},i}F_t^i
-  \eta^{\mathrm{is}}(1-r_t^i)\\
- &+(1-\eta^{\mathrm{is}})-l^{\mathrm{HP}}.
-\end{aligned}
-\label{eq:corrected_cop}
-\end{equation}
-Here, $F_t^i$ and $r_t^i$ are the correction factors of the underlying
-approximation. Ammonia is assumed as refrigerant, with an isentropic compressor
-efficiency of 0.75, a pinch-point temperature difference of 2~K, and no
-additional heat-loss term. COP values below one or temperature lifts below
-5~K are excluded~\cite{zajacs2020lowtemperature}.
+The heat-pump COPs are calculated exogenously with an adaptation of the central-heating COP approximation implemented in PyPSA-Eur \cite{pypsaeur2025}, which is based on Jensen et al.\ \cite{jensen2018cop} with the parameterisation evaluated by Pieper et al.\ \cite{pieper2020cop}.
 
-District-heating return and supply temperatures are fixed at
-$40^\circ\mathrm{C}$ and $75^\circ\mathrm{C}$, respectively.
-The assumed source inlet/outlet temperatures are $12/8^\circ\mathrm{C}$ for
-City2 and $10.5/4^\circ\mathrm{C}$ for the groundwater heat pump.
-These assumptions give constant COPs of 3.51 and 3.30, respectively.
+\paragraph{Supply temperature}
+The district-heating supply temperature follows HTF's weather-compensation curves. For each of three network points $n$, the required temperature decreases linearly with the 24-hour mean ambient temperature $\overline{T}^{\mathrm{amb}}_t$ down to a minimum value,
+\begin{equation}
+    T^{\mathrm{sup}}_{n,t} = \max\left\{T^{\min}_n,\ T^{0}_n - \frac{T^{0}_n - T^{\min}_n}{16}\,\overline{T}^{\mathrm{amb}}_t\right\},
+\end{equation}
+with $(T^{\min}_n, T^{0}_n)$ equal to $(66, 74)$, $(68, 78)$ and $(63, 73)$~$^\circ$C. The supply temperature is the highest of the three, $T^{\mathrm{sup}}_t=\max_n T^{\mathrm{sup}}_{n,t}$, and ranged from 68 to 83~$^\circ$C in 2024. The return temperature is fixed at 50~$^\circ$C. Ambient temperature is taken from ERA5-Land.
+
+\paragraph{COP}
+For each heat pump $i\in\hpset$, the logarithmic mean temperatures of sink and source are
+\begin{equation}
+    \widetilde{T}^{i}_{j,t}
+    = \frac{T^{i,\mathrm{hot}}_{j,t} - T^{i,\mathrm{cold}}_{j,t}}
+           {\ln\left(T^{i,\mathrm{hot}}_{j,t}/T^{i,\mathrm{cold}}_{j,t}\right)},
+    \qquad j\in\{\mathrm{sink},\mathrm{src}\},
+\end{equation}
+and the ideal Lorenz COP is
+\begin{equation}
+    COP^{\mathrm{L},i}_{t} = \frac{\widetilde{T}^{i}_{\mathrm{sink},t}}{\widetilde{T}^{i}_{\mathrm{sink},t} - \widetilde{T}^{i}_{\mathrm{src},t}}.
+\end{equation}
+It is adjusted for refrigerant properties, the heat-exchanger pinch temperature and compressor efficiency:
+\begin{equation}
+    COP^{i}_{t} = COP^{\mathrm{L},i}_{t} F^{i}_{t}\,\eta^{\mathrm{is}}\left(1-r^{i}_{t}\right) + \left(1-\eta^{\mathrm{is}}\right) - l^{\mathrm{HP}},
+\end{equation}
+where $F^{i}_{t}$ and $r^{i}_{t}$ are the correction factors of the approximation. Ammonia is assumed as refrigerant, with an isentropic compressor efficiency of 0.75, a pinch-point temperature difference of 2~K and no additional heat-loss term. COP values below one or temperature lifts below 5~K are excluded \cite{zajacs2020lowtemperature}.
+
+The source inlet and outlet temperatures are 12/8~$^\circ$C for City2 and 10.5/4~$^\circ$C for the groundwater heat pump. The resulting hourly COPs range from 3.14 to 3.56 for City2 and from 2.97 to 3.34 for the groundwater heat pump.

@@ -1,6 +1,5 @@
 \begin{table}[tbp]
-\caption{Notation for the operational model. Powers are in MW and stored energy is in MWh;
-energy costs are in DKK/MWh and start-up costs in DKK/start.}
+\caption{Notation. Powers are in MW (hourly periods, so MW equals MWh per period), stored energy in MWh, prices and values in DKK/MWh and start-up costs in DKK per start.}
 \label{tab:nomenclature}
 \footnotesize
 \begin{minipage}[t]{0.48\textwidth}
@@ -9,22 +8,27 @@ energy costs are in DKK/MWh and start-up costs in DKK/start.}
 Symbol & Description \\
 \midrule
 \multicolumn{2}{@{}l}{\textit{Sets and indices}}\\
-$\mathcal T=\{1,\ldots,N\}$ & Hourly operating periods \\
-$\mathcal H=\{\mathrm{c2},\mathrm{gw}\}$ & City2 and groundwater heat pumps \\
-$i,t,s,m(t)$ & Heat pump, period, scenario, and month containing $t$ \\
+$t\in\mathcal T$ & Hourly periods \\
+$m$ & Month containing period $t$ \\
+$u\in\mathcal U$ & Upstream supply units \\
+$a\in\mathcal A$ & Upstream accumulators \\
+$i\in\mathcal H=\{\mathrm{c2},\mathrm{gw}\}$ & City2 and groundwater heat pumps \\
 \addlinespace
 \multicolumn{2}{@{}l}{\textit{Decision variables}}\\
-$g_t^{\mathrm{el}},g_t^{\mathrm{DH}}$ & Electricity and transmission-heat imports \\
-$f_t^{\mathrm{HX}}$ & Direct heat-exchanger supply to local demand \\
-$p_t^i,q_t^i$ & Electrical input and thermal output of heat pump $i$ \\
-$p_t^{\mathrm{ch}},p_t^{\mathrm{dis}}$ & PTES charging and discharging powers \\
-$e_t$ & Stored thermal energy at the end of period $t$ \\
-$y_t^i,z_t^i$ & Heat-pump commitment and start-up indicators \\
-$y_t^{\mathrm{ch}},y_t^{\mathrm{dis}}$ & PTES charging and discharging indicators \\
+$Q_{u,t},F_{u,t}$ & Heat production and fuel input of unit $u$ \\
+$f^{\mathrm{HX}}_t$ & Heat delivered to HTF through the heat exchanger \\
+$p^{\mathrm{ch}}_t,p^{\mathrm{dis}}_t$ & PTES charging and discharging \\
+$e_t$ & PTES inventory at the end of period $t$ \\
+$y^{\mathrm{ch}}_t,y^{\mathrm{dis}}_t$ & PTES charging and discharging modes \\
+$p^i_t,q^i_t$ & Electricity input and heat output of heat pump $i$ \\
+$z^i_t$ & Heat-pump start-up \\
+$g^{\mathrm{el}}_t$ & Net electricity purchase \\
 \addlinespace
-\multicolumn{2}{@{}l}{\textit{Economic indicators}}\\
-$C_s^{\mathrm{HT}},P_s^{\mathrm{DH}}$ & Local expenditure and imported-heat payment \\
-$C_s^{\mathrm{common}}$ & Common operational resource-cost proxy \\
+\multicolumn{2}{@{}l}{\textit{Evaluation}}\\
+$C^{\mathrm{sys}}$, $C^{\mathrm{HTF}}$ & System operating cost and HTF expenditure \\
+$\Delta C^{\mathrm{sys}}$, $\Delta B^{\mathrm{HTF}}$ & System saving and HTF bill saving \\
+$\Delta U$ & Upstream aggregate gain \\
+$\rho$ & Recovered share of the coordination value \\
 \bottomrule
 \end{tabularx}
 \end{minipage}\hfill
@@ -33,21 +37,25 @@ $C_s^{\mathrm{common}}$ & Common operational resource-cost proxy \\
 \toprule
 Symbol & Description \\
 \midrule
-\multicolumn{2}{@{}l}{\textit{Parameters and external inputs}}\\
-$\Delta t,d_t$ & Period duration (1 h) and local heat demand \\
-$c_t^{\mathrm{el}},c_t^{\mathrm{DH}}$ & Electricity price and external heat price \\
-$c^{\mathrm{su},i}$ & Start-up cost of heat pump $i$ \\
-$\mathrm{COP}_t^i$ & Coefficient of performance of heat pump $i$ \\
-$\overline p^i,\overline q^i$ & Nominal electrical and thermal heat-pump capacities \\
-$\underline f^{\mathrm{HX}},\overline f^{\mathrm{HX}}$ & Minimum and maximum direct heat supply \\
-$\underline p^a,\overline p^a$ & Active PTES power limits, $a\in\{\mathrm{ch},\mathrm{dis}\}$ \\
-$\overline e,e^{\mathrm{init}}$ & Usable storage capacity and initial energy \\
-$\lambda,r^{\mathrm{PTES}}$ & Loss fraction per period and allowed power change per period \\
-$\mathrm{MC}_t^{\mathrm{heat}}$ & Upstream marginal heat-cost proxy \\
-$c^{\mathrm{bio}},c_{\mathrm{CHP}}^{\mathrm{var}}$ & Fuel and variable costs per MWh of fuel input \\
-$e_{\mathrm{CO}_2}^{\mathrm{bio}},c^{\mathrm{CO}_2}$ & Fossil emission factor and carbon price \\
-$\eta_{\mathrm{th}},\eta_{\mathrm{el}}$ & CHP heat and electricity efficiencies \\
-$c_m^{\mathrm{VEKS}},\alpha$ & Monthly tariff and hourly-variation scaling factor \\
+\multicolumn{2}{@{}l}{\textit{Parameters and inputs}}\\
+$d_t$, $D^{\mathrm{reg}}_t$ & HTF demand and CTR/VEKS demand \\
+$c^{\mathrm{el}}_t$, $c^{\mathrm{add}}$ & DK2 price and electricity adder \\
+$\tau_m$ & Monthly heat tariff \\
+$r$ & Transmission delivery factor \\
+$\overline e$, $\lambda$ & PTES capacity and hourly standing loss \\
+$e^{\mathrm{start}}$, $e^{\mathrm{end}}$ & Measured inventory at period start and end \\
+$\underline p^{a},\overline p^{a}$ & PTES flow limits, $a\in\{\mathrm{ch},\mathrm{dis}\}$ \\
+$r^{\mathrm{PTES}}$, $\kappa$ & PTES ramp limit and pumping electricity \\
+$\eta^{\mathrm{ch}},\eta^{\mathrm{dis}}$ & PTES charging and discharging efficiencies \\
+$\underline f^{\mathrm{HX}},\overline f^{\mathrm{HX}}$ & Heat-exchanger limits \\
+$\mathrm{COP}^i_t$, $c^{\mathrm{su},i}$ & Heat-pump COP and start-up cost \\
+\addlinespace
+\multicolumn{2}{@{}l}{\textit{Values and tariff}}\\
+$\mu_t$, $v_t$ & Marginal value of upstream heat and of stored heat \\
+$\delta^{\star}_t$ & Value spread $\mu_t/r-v_t/\eta^{\mathrm{dis}}$ \\
+$\delta_t$, $\pi^{\mathrm{D}}_t$ & Discharge credit and discharge price \\
+$g$, $s$ & Timing strength and value share of the credit \\
+$p^{\mathrm{ch},\star}_t$ & Announced charging schedule \\
 \bottomrule
 \end{tabularx}
 \end{minipage}
