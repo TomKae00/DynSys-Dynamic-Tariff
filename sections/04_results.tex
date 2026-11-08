@@ -86,13 +86,13 @@ The agreement with the schedule also holds hour by hour, although HTF is free to
         & Constant & Hourly & Value share & Full & Coordinated \\
         & 5 DKK/MWh & credit & $s=1$ & implementation & schedule \\
         \midrule
-        PTES discharge & 32.4 & 33.9 & 33.5 & 35.7 & 36.7 \\
-        Direct supply via heat exchanger & $-32.4$ & $-33.8$ & $-32.9$ & $-33.2$ & $-29.5$ \\
-        CHP plants & 8.5 & 11.9 & 12.4 & 15.8 & 20.6 \\
-        Gas peak boilers & $-5.9$ & $-9.8$ & $-9.8$ & $-11.3$ & $-11.6$ \\
-        Biomass peak boilers & 2.6 & 2.9 & 2.8 & 2.9 & 3.1 \\
-        Electric boilers and regional heat pump & $-5.0$ & $-4.8$ & $-4.7$ & $-4.7$ & $-4.7$ \\
-        HTF heat pumps & 0.0 & 0.0 & $-0.6$ & $-2.5$ & $-7.2$ \\
+        PTES discharge & 32.4 & 33.9 & 33.5 & 36.7 & 36.7 \\
+        Direct supply via heat exchanger & $-32.4$ & $-33.8$ & $-32.9$ & $-34.4$ & $-29.5$ \\
+        CHP plants & 8.5 & 11.9 & 12.4 & 15.9 & 20.6 \\
+        Gas peak boilers & $-5.9$ & $-9.8$ & $-9.8$ & $-11.5$ & $-11.6$ \\
+        Biomass peak boilers & 2.6 & 2.9 & 2.8 & 3.0 & 3.1 \\
+        Electric boilers and regional heat pump & $-5.0$ & $-4.8$ & $-4.7$ & $-4.8$ & $-4.7$ \\
+        HTF heat pumps & 0.0 & 0.0 & $-0.6$ & $-2.4$ & $-7.2$ \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -119,7 +119,7 @@ The agreement with the schedule also holds hour by hour, although HTF is free to
 \subsection{Full implementation of the schedule and discharge capacity}
 \label{sec:results-implementation}
 
-\Cref{tab:implementation} compares HTF's response to the hourly credit with the full-implementation case, in which the PTES is operated exactly according to the coordinated schedule, for the design discharge rating of 30~MW and the current limit of 23~MW. These cases are solved with HiGHS; the hourly-credit results differ from \cref{tab:annual-results} by less than 0.3\%.
+\Cref{tab:implementation} compares HTF's response to the hourly credit with the full-implementation case, in which the PTES is operated exactly according to the coordinated schedule, for the design discharge rating of 30~MW and the current limit of 23~MW.
 
 \begin{table}[!htb]
     \centering
@@ -130,24 +130,24 @@ The agreement with the schedule also holds hour by hour, although HTF is free to
         \toprule
         Discharge limit & Case & $\Delta C^{\mathrm{sys}}$ & $\Delta B^{\mathrm{HTF}}$ & $\Delta U$ & Discharge [GWh] & Cycles & Weeks \\
         \midrule
-        30~MW & Coordinated schedule & 4.86 & -- & -- & 65.5 & 19.8 & -- \\
-              & HTF response, hourly credit & 3.84 & 0.47 & 3.37 & 63.0 & 19.1 & 52 \\
-              & Full implementation, monthly tariff & 4.32 & $-0.29$ & 4.61 & 65.5 & 19.8 & 3 \\
-              & Full implementation, hourly credit & 4.32 & 0.24 & 4.08 & 65.5 & 19.8 & 37 \\
+        30~MW & Coordinated schedule & 4.86 & -- & -- & 66.5 & 20.2 & -- \\
+              & HTF response, hourly credit & 3.83 & 0.47 & 3.36 & 63.6 & 19.3 & 52 \\
+              & Full implementation, monthly tariff & 4.29 & $-0.28$ & 4.57 & 66.5 & 20.2 & 5 \\
+              & Full implementation, hourly credit & 4.29 & 0.26 & 4.03 & 66.5 & 20.2 & 40 \\
         \midrule
-        23~MW & Coordinated schedule & 4.60 & -- & -- & 60.4 & 18.3 & -- \\
-              & HTF response, hourly credit & 3.61 & 0.43 & 3.18 & 57.9 & 17.5 & 52 \\
-              & Full implementation, monthly tariff & 4.05 & $-0.27$ & 4.32 & 60.4 & 18.3 & 3 \\
-              & Full implementation, hourly credit & 4.05 & 0.22 & 3.84 & 60.4 & 18.3 & 37 \\
+        23~MW & Coordinated schedule & 4.62 & -- & -- & 62.6 & 19.0 & -- \\
+              & HTF response, hourly credit & 3.61 & 0.43 & 3.18 & 59.2 & 17.9 & 52 \\
+              & Full implementation, monthly tariff & 4.04 & $-0.26$ & 4.31 & 62.6 & 19.0 & 5 \\
+              & Full implementation, hourly credit & 4.04 & 0.23 & 3.82 & 62.6 & 19.0 & 40 \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-If the schedule is implemented exactly under the current settlement, the system saving is 4.32~MDKK, or 89\% of the coordination value, but HTF's bill increases by 0.29~MDKK per year, and HTF is worse off in 49 of 52 weeks. Two effects contribute: the pumping electricity for the additional discharge, and the fact that scheduled discharge displaces HTF's heat pumps in some hours (14.5 instead of 17.0~GWh), so that HTF buys more heat at the monthly tariff. Under the current settlement, implementing the schedule therefore results in a net cost for HTF. With the hourly credit, full implementation leaves HTF better off by 0.24~MDKK over the year, but HTF is still worse off in 15 weeks. Full implementation saves 0.48~MDKK more than HTF's voluntary response to the credit; this difference corresponds to the hours in which following the schedule costs HTF more than the credit compensates, mainly through displaced heat-pump production. The upstream gain under full implementation (4.08--4.61~MDKK) would be sufficient to compensate HTF for these costs, for example through a higher credit or a separate payment for implementing the schedule.
+If the schedule is implemented exactly under the current settlement, the system saving is 4.29~MDKK, or 88\% of the coordination value, but HTF's bill increases by 0.28~MDKK per year, and HTF is worse off in 47 of 52 weeks. Two effects contribute: the pumping electricity for the additional discharge, and the fact that scheduled discharge displaces HTF's heat pumps in some hours (14.7 instead of 17.0~GWh), so that HTF buys more heat at the monthly tariff. Under the current settlement, implementing the schedule therefore results in a net cost for HTF. With the hourly credit, full implementation leaves HTF better off by 0.26~MDKK over the year, but HTF is still worse off in 12 weeks. Full implementation saves 0.46~MDKK more than HTF's voluntary response to the credit; this difference corresponds to the hours in which following the schedule costs HTF more than the credit compensates, mainly through displaced heat-pump production. The upstream gain under full implementation (4.03--4.57~MDKK) would be sufficient to compensate HTF for these costs, for example through a higher credit or a separate payment for implementing the schedule.
 
-With the discharge limited to 23~MW, the coordination value decreases from 4.86 to 4.60~MDKK and the scheduled discharge from 65.5 to 60.4~GWh. In the 30~MW schedule, discharge exceeds 23~MW in 1,475 hours of the year. Using the design rating of 30~MW is therefore worth about 0.25~MDKK per year in the coordinated schedule and 0.23~MDKK under the hourly credit. The effect of the tariff is similar for both limits: the hourly credit recovers 79\% of the coordination value with 30~MW and 78\% with 23~MW.
+With the discharge limited to 23~MW, the coordination value decreases from 4.86 to 4.62~MDKK and the scheduled discharge from 66.5 to 62.6~GWh. In the 30~MW schedule, discharge exceeds 23~MW in 1,494 hours of the year. Using the design rating of 30~MW is therefore worth about 0.24~MDKK per year in the coordinated schedule and 0.22~MDKK under the hourly credit. The effect of the tariff is similar for both limits: the hourly credit recovers 79\% of the coordination value with 30~MW and 78\% with 23~MW.
 
 \subsection{Local heat pumps}
 \label{sec:results-hp}
 
-Under the hourly credit, 1.03~MDKK (21\%) of the coordination value is not recovered. PTES discharge reaches 96\% of the coordinated schedule, so the remainder is mainly associated with HTF's heat pumps: they produce 17.0~GWh in the measured reference and in all responses, 14.5~GWh under full implementation and 9.9~GWh in the coordinated schedule (\cref{tab:production}). The difference occurs from March to December and is largest from April to October, when the monthly mean marginal value of delivered heat lies 120--280~DKK/MWh below the monthly tariff. Local production is then cheaper for HTF than direct supply, but more expensive for the system.
+Under the hourly credit, 1.03~MDKK (21\%) of the coordination value is not recovered. PTES discharge reaches 96\% of the coordinated schedule, so the remainder is mainly associated with HTF's heat pumps: they produce 17.0~GWh in the measured reference and in all responses, 14.7~GWh under full implementation and 9.9~GWh in the coordinated schedule (\cref{tab:production}). The difference occurs from March to December and is largest from April to October, when the monthly mean marginal value of delivered heat lies 120--280~DKK/MWh below the monthly tariff. Local production is then cheaper for HTF than direct supply, but more expensive for the system.
