@@ -40,7 +40,7 @@ findings generalise beyond Høje Taastrup.
 | Framework (coordinated schedule, credit, HTF response, corrective dispatch) | Done |
 | Measured 2024 reference, validation against Varmelast production (< 1 %) | Done |
 | Weekly perfect-foresight results, value sharing, schedule following, 23 vs 30 MW | Done (Gurobi) |
-| HTF demand at 2024 level and weather | Done, rerun pending |
+| HTF demand at 2024 level and weather | Done; weekly study rerun (coordination value 5.18 MDKK, hourly credit 4.21 MDKK) |
 | Rolling daily planning (24 h and 7 days) | Implemented, runs pending |
 | Sensitivities (minimum flows, pumping, heat-pump electricity cost, credit level) | Configs ready, runs pending |
 | Tariff parameter sweep | Not started |
@@ -160,18 +160,17 @@ Likelihood and impact: H = high, M = medium, L = low.
 | 8 | **Simplified upstream model** (one heat node, constant fuel prices, no CHP start-ups) | M | L | Validation against Varmelast production; gas-price sensitivity; argue that the credit depends on day-to-day value differences, which the model captures |
 | 9 | **Tariff parameters look arbitrary** | H | M | Parameter sweep and frontier (B1, B2) |
 | 10 | **One-pass coupling criticised** | M | M | Iteration test (C4) and small-player check (C6); argue that announce-then-respond is the implementable sequence; if differences are small, keep one pass and state it |
-| 15 | **Corrective dispatch too optimistic**: upstream re-dispatch at day-ahead prices ignores that electricity bids are already placed, so balancing costs of deviations are missing | M | M | Two-settlement evaluation (C7); report the deviation volumes now and the balancing cost once imbalance prices are added |
 | 11 | **Heat-pump result driven by a placeholder cost** | H | L | Present it as a secondary finding with a sensitivity; calibrate with HTF data (D3) |
 | 12 | **Compute time** for rolling studies and sweeps | M | L | Run on Gurobi overnight; split configs; start with the 24 h run |
 | 13 | **Scope creep** (adding many extensions) | M | M | Keep this plan as the scope; new ideas go to "further work" unless they answer a reviewer risk above |
 | 14 | **Inconsistent numbers** across text, tables and figures after reruns | M | M | Generate all numbers from one script (F2); final consistency check before submission |
+| 15 | **Corrective dispatch too optimistic**: upstream re-dispatch at day-ahead prices ignores that electricity bids are already placed, so balancing costs of deviations are missing | M | M | Two-settlement evaluation (C7); report the deviation volumes now and the balancing cost once imbalance prices are added |
 
 ---
 
 ## 6. Immediate next steps
 
-1. Tom: run A1 (weekly with 2024 demand), then A2 and A3 (rolling) with Gurobi; upload
-   the result folders.
+1. Tom: run A2 and A3 (rolling) with Gurobi; upload the result folders. A1 is done.
 2. Claude: prepare the parameter sweep config (B1), the extra sensitivities (C2) and
    the iteration test (C4).
 3. Tom: start the literature review (E1) with the topics listed above.
