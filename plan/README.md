@@ -41,7 +41,7 @@ findings generalise beyond Høje Taastrup.
 | Measured 2024 reference, validation against Varmelast production (< 1 %) | Done |
 | Weekly perfect-foresight results, value sharing, schedule following, 23 vs 30 MW | Done (Gurobi) |
 | HTF demand at 2024 level and weather | Done; weekly study rerun (coordination value 5.18 MDKK, hourly credit 4.21 MDKK) |
-| Rolling daily planning (24 h and 7 days) | Implemented, runs pending |
+| Rolling daily planning (24 h and 7 days) | Done (Gurobi). 7 days: coordination value 7.63 MDKK, hourly credit 6.18 MDKK (81 %); 24 h: 3.72 and 3.14 MDKK (84 %). Weekly study is conservative (fixed weekly end levels), not an upper bound |
 | Sensitivities (minimum flows, pumping, heat-pump electricity cost, credit level) | Configs ready, runs pending |
 | Tariff parameter sweep | Not started |
 | Local generation at HTF (data centres, solar, recovered heat) | On hold, waiting for HTF |
@@ -151,7 +151,7 @@ Likelihood and impact: H = high, M = medium, L = low.
 | # | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|---|
 | 1 | **Novelty judged incremental** ("marginal-cost heat pricing is known"), desk rejection | M | H | Frame the contribution around the ownership boundary and the operator's own response, tested against measured operation (E1, E2); show design insights (B); ask Henrik to check the framing before submission |
-| 2 | **Savings shrink under daily planning and forecasts** | M | M | Report it as a result: the share of the value that is robust to planning practice. The mechanism and distribution findings remain; the weekly run becomes the upper bound |
+| 2 | **Savings shrink under daily planning and forecasts** | M | M | Report the recovered share, which is stable across set-ups (81–84 % weekly, 24 h and 7-day rolling); present absolute savings as a range across planning set-ups |
 | 3 | **HTF or Varmelast data do not arrive or arrive late** | M | M | Paper is designed to work without them: rolling runs with actual data, sensitivities on the uncertain inputs, transparent limitations; set a cut-off date for waiting |
 | 4 | **Data cannot be published** (confidential metered or planning data) | M | M | Agree early what can be shown (aggregates, normalised profiles); state it in the data availability statement (F3) |
 | 5 | **Stakeholder sensitivity**: results read as criticism of HTF's operation | M | H | Keep neutral wording (settlement, planning information, not behaviour); let HTF and VEKS check facts before submission (E7); acknowledge their input |
@@ -170,7 +170,7 @@ Likelihood and impact: H = high, M = medium, L = low.
 
 ## 6. Immediate next steps
 
-1. Tom: run A2 and A3 (rolling) with Gurobi; upload the result folders. A1 is done.
+1. A1–A3 done. Next runs: sensitivities (C1) and the parameter sweep (B1) in the rolling 7-day set-up.
 2. Claude: prepare the parameter sweep config (B1), the extra sensitivities (C2) and
    the iteration test (C4).
 3. Tom: start the literature review (E1) with the topics listed above.
