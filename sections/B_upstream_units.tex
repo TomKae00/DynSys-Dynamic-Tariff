@@ -1,0 +1,22 @@
+\section{Upstream unit parameters}
+\label{app:units}
+
+\Cref{tab:units} lists the parameters of the CHP plants in \cref{eq:chp-bp,eq:chp-ex,eq:chp-limits}. All plants have an availability factor of $\alpha_u=0.9$. The remaining upstream units are aggregated: gas, oil and biomass boilers with capacities of 1,032, 1,040 and 41~MW, efficiencies of 0.92, 0.90 and 0.90 and fuel prices of 350, 600 and 200~DKK/MWh; electric boilers with 200~MW and an efficiency of 0.99; a common peak-boiler capacity of $\overline Q^{\mathrm{pb}}=2{,}033$~MW; and regional heat pumps with 20~MW and a COP of 3.2. The variable operating cost is 5~DKK/MWh of heat for boilers and 10~DKK/MWh for waste incineration.
+
+\begin{table}[!htb]
+    \centering
+    \small
+    \caption{CHP plant parameters. bp: back-pressure unit with bypass; ex: extraction unit. Capacities in MW, fuel prices in DKK/MWh of fuel, variable operating costs in DKK/MWh of heat.}
+    \label{tab:units}
+    \begin{tabular}{llrrrrrrrrrr}
+        \toprule
+        Unit & Type & $\overline Q_u$ & $\overline P_u$ & $\overline F_u$ & $\overline Q^{\mathrm{by}}_u$ & $c_{\mathrm{m},u}$ & $c_{\mathrm{v},u}$ & $\eta^{\mathrm{el}}_u$ & $\eta^{\mathrm{by}}_u$ & $c^{\mathrm{fuel}}_u$ & $c^{\mathrm{vom}}_u$ \\
+        \midrule
+        AMV1 & bp & 250 & 68 & 338 & 68 & 0.272 & -- & 0.201 & 0.941 & 240 & 4 \\
+        AMV4 & bp & 400 & 150 & 487 & 150 & 0.375 & -- & 0.308 & 1.129 & 160 & 12 \\
+        KKV8 & bp & 51 & 8.5 & 56.7 & 8.5 & 0.167 & -- & 0.150 & 1.050 & 160 & 12 \\
+        AVV1 & ex & 370 & 260 & 652 & -- & 0.587 & 0.116 & 0.399 & -- & 240 & 12 \\
+        AVV2 & ex & 450 & 345 & 804 & -- & 0.608 & 0.159 & 0.429 & -- & 225 & 12 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
