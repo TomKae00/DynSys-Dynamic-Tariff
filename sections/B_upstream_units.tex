@@ -1,7 +1,28 @@
-\section{Upstream unit parameters}
+\section{Upstream units}
 \label{app:units}
 
-\Cref{tab:units} lists the parameters of the CHP plants in \cref{eq:chp-bp,eq:chp-ex,eq:chp-limits}. All plants have an availability factor of $\alpha_u=0.9$. The remaining upstream units are aggregated: gas, oil and biomass boilers with capacities of 1,032, 1,040 and 41~MW, efficiencies of 0.92, 0.90 and 0.90 and fuel prices of 350, 600 and 200~DKK/MWh; electric boilers with 200~MW and an efficiency of 0.99; a common peak-boiler capacity of $\overline Q^{\mathrm{pb}}=2{,}033$~MW; and regional heat pumps with 20~MW and a COP of 3.2. The variable operating cost is 5~DKK/MWh of heat for boilers and 10~DKK/MWh for waste incineration.
+The set $\mathcal U$ contains the CHP plants $\mathcal U^{\mathrm{chp}}=\mathcal U^{\mathrm{bp}}\cup\mathcal U^{\mathrm{ex}}$, waste incineration (w), the gas, oil, biomass and electric peak boilers $\mathcal U^{\mathrm{pb}}$ and the regional heat pumps (rhp). The electricity quantities in \cref{eq:system-cost} are
+\begin{align}
+g^{\mathrm{el,heat}}_t &= \frac{Q_{\mathrm{eb},t}}{\eta_{\mathrm{eb}}} + \frac{Q_{\mathrm{rhp},t}}{\mathrm{COP}_{\mathrm{rhp}}} + \sum_{i\in\hpset} p^i_t + \kappa\,\big(p^{\mathrm{ch}}_t+p^{\mathrm{dis}}_t\big), \label{eq:el-heat}\\
+g^{\mathrm{el}}_t &= g^{\mathrm{el,heat}}_t - \sum_{u\in\mathcal U^{\mathrm{chp}}} P_{u,t} - \sigma_{\mathrm{w}}\,Q_{\mathrm{w},t}, \label{eq:el-balance}
+\end{align}
+with the electric boiler (eb), the electricity output $P_{u,t}$ of the CHP plants and the electricity output of waste incineration in a fixed ratio $\sigma_{\mathrm{w}}=0.25$ to its heat output. The CHP plants are described by their power-to-heat ratio $c_{\mathrm{m},u}$ and, for extraction units, the loss of electricity per unit of heat extracted, $c_{\mathrm{v},u}$:
+\begin{align}
+& Q_{u,t} = Q^{\mathrm{bp}}_{u,t} + Q^{\mathrm{by}}_{u,t}, \quad P_{u,t} = c_{\mathrm{m},u}\,Q^{\mathrm{bp}}_{u,t}, \quad F_{u,t} = \frac{P_{u,t}}{\eta^{\mathrm{el}}_u} + \frac{Q^{\mathrm{by}}_{u,t}}{\eta^{\mathrm{by}}_u}, && u\in\mathcal U^{\mathrm{bp}}, \label{eq:chp-bp}\\
+& F_{u,t} = \frac{P_{u,t} + c_{\mathrm{v},u}\,Q_{u,t}}{\eta^{\mathrm{el}}_u}, \quad P_{u,t} \ge c_{\mathrm{m},u}\,Q_{u,t}, && u\in\mathcal U^{\mathrm{ex}}, \label{eq:chp-ex}\\
+& P_{u,t}\le \alpha_u\overline P_u, \quad Q_{u,t}\le \alpha_u\big(\overline Q_u+\overline Q^{\mathrm{by}}_u\big), \quad F_{u,t}\le \alpha_u\overline F_u, && u\in\mathcal U^{\mathrm{chp}}, \label{eq:chp-limits}
+\end{align}
+where $Q^{\mathrm{by}}_{u,t}$ is the heat produced in bypass operation, $\alpha_u$ the availability factor and $\overline Q^{\mathrm{by}}_u$ the additional heat capacity in bypass operation. Start-up costs, minimum loads and ramp rates of the CHP plants are not modelled. Waste is incinerated as observed, with heat output $W_t$; only heat in excess of the regional demand without HTF and the minimum flow through the heat exchanger may be cooled away,
+\begin{equation}
+\min\big\{W_t,\,(D^{\mathrm{reg}}_t-d_t+\underline f^{\mathrm{HX}})/r\big\} \;\le\; Q_{\mathrm{w},t} \;\le\; W_t. \label{eq:waste}
+\end{equation}
+Peak boilers and regional heat pumps are limited by their capacities, the boilers in addition by a common capacity, and the accumulators have a standing loss $\lambda_a$, a common converter capacity for charging and discharging and equal inventories at the start and the end of the horizon:
+\begin{align}
+& 0\le Q_{u,t}\le \overline Q_u, \quad F_{u,t} = Q_{u,t}/\eta_u, \qquad \textstyle\sum_{u\in\mathcal U^{\mathrm{pb}}} Q_{u,t} \le \overline Q^{\mathrm{pb}}, \label{eq:boilers}\\
+& e_{a,t} = (1-\lambda_a)\,e_{a,t-1} + p^{\mathrm{ch}}_{a,t} - p^{\mathrm{dis}}_{a,t}, \quad 0\le e_{a,t}\le \overline e_a, \quad p^{\mathrm{ch}}_{a,t}+p^{\mathrm{dis}}_{a,t}\le \overline p_a, \quad e_{a,0}=e_{a,T}=\overline e_a/2. \label{eq:upstream-limits}
+\end{align}
+
+\Cref{tab:units} lists the parameters of the CHP plants; all have an availability factor of $\alpha_u=0.9$. The gas, oil and biomass boilers have capacities of 1,032, 1,040 and 41~MW, efficiencies of 0.92, 0.90 and 0.90 and fuel prices of 350, 600 and 200~DKK/MWh; the electric boilers have 200~MW and an efficiency of 0.99; the common peak-boiler capacity is $\overline Q^{\mathrm{pb}}=2{,}033$~MW; and the regional heat pumps have 20~MW and a COP of 3.2. The variable operating cost is 5~DKK/MWh of heat for boilers and 10~DKK/MWh for waste incineration, and the standing loss of the accumulators is 0.01\,\%/h.
 
 \begin{table}[!htb]
     \centering

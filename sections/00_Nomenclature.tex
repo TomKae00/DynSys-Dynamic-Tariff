@@ -10,25 +10,23 @@ Symbol & Description \\
 \multicolumn{2}{@{}l}{\textit{Sets and indices}}\\
 $t\in\mathcal T$ & Hourly periods \\
 $m$ & Month containing period $t$ \\
-$u\in\mathcal U$ & Upstream supply units; $\mathcal U^{\mathrm{bp}}$, $\mathcal U^{\mathrm{ex}}$ back-pressure and extraction CHP, $\mathcal U^{\mathrm{pb}}$ peak boilers \\
+$u\in\mathcal U$ & Upstream supply units \\
 $a\in\mathcal A$ & Upstream accumulators \\
 $i\in\mathcal H=\{\mathrm{c2},\mathrm{gw}\}$ & City2 and groundwater heat pumps \\
 \addlinespace
 \multicolumn{2}{@{}l}{\textit{Decision variables}}\\
-$Q_{u,t},F_{u,t},P_{u,t}$ & Heat production, fuel input and electricity output of unit $u$ \\
-$Q^{\mathrm{bp}}_{u,t},Q^{\mathrm{by}}_{u,t}$ & Back-pressure and bypass heat of unit $u$ \\
-$e_{a,t},p^{\mathrm{ch}}_{a,t},p^{\mathrm{dis}}_{a,t}$ & Inventory, charging and discharging of accumulator $a$ \\
+$Q_{u,t},F_{u,t}$ & Heat production and fuel input of unit $u$ \\
+$p^{\mathrm{ch}}_{a,t},p^{\mathrm{dis}}_{a,t}$ & Charging and discharging of accumulator $a$ \\
 $f^{\mathrm{HX}}_t$ & Heat delivered to HTF through the heat exchanger \\
 $p^{\mathrm{ch}}_t,p^{\mathrm{dis}}_t$ & PTES charging and discharging \\
 $e_t$ & PTES inventory at the end of period $t$ \\
 $y^{\mathrm{ch}}_t,y^{\mathrm{dis}}_t$ & PTES charging and discharging modes \\
 $p^i_t,q^i_t$ & Electricity input and heat output of heat pump $i$ \\
-$y^i_t,z^i_t,w^i_t$ & Heat-pump status, start and stop \\
+$y^i_t,z^i_t$ & Heat-pump status and start \\
 $g^{\mathrm{el}}_t$, $g^{\mathrm{el,heat}}_t$ & Net electricity purchase; electricity for heat production and pumping \\
 \addlinespace
 \multicolumn{2}{@{}l}{\textit{Evaluation}}\\
 $C^{\mathrm{sys}}$, $C^{\mathrm{HTF}}$ & System operating cost and HTF expenditure \\
-$R$, $C^{\mathrm{loc}}$, $U$ & Heat payment, HTF's own operating cost, upstream surplus \\
 $\Delta C^{\mathrm{sys}}$, $\Delta B^{\mathrm{HTF}}$ & System saving and HTF bill saving \\
 $\Delta U$ & Upstream aggregate gain \\
 $\rho$ & Recovered share of the coordination value \\
@@ -52,15 +50,13 @@ $r^{\mathrm{PTES}}$, $\kappa$ & PTES ramp limit and pumping electricity \\
 $\eta^{\mathrm{ch}},\eta^{\mathrm{dis}}$ & PTES charging and discharging efficiencies \\
 $\underline f^{\mathrm{HX}},\overline f^{\mathrm{HX}}$ & Heat-exchanger limits \\
 $\mathrm{COP}^i_t$, $c^{\mathrm{su},i}$, $\underline\phi$ & Heat-pump COP, start-up cost and minimum part load \\
-$c_{\mathrm{m},u}$, $c_{\mathrm{v},u}$, $\alpha_u$ & CHP power-to-heat ratio, electricity loss per unit of heat, availability \\
-$W_t$, $\sigma_{\mathrm{w}}$ & Observed waste heat output; electricity-to-heat ratio of waste incineration \\
 \addlinespace
 \multicolumn{2}{@{}l}{\textit{Values and tariff}}\\
 $\mu_t$, $v_t$ & Marginal value of upstream heat and of stored heat \\
 $\delta^{\star}_t$ & Value spread $\mu_t/r-v_t/\eta^{\mathrm{dis}}$ \\
 $\delta_t$, $\pi^{\mathrm{D}}_t$ & Discharge credit and discharge price \\
 $g$, $s$ & Timing strength and value share of the credit \\
-$a_m$, $\overline\delta$, $\delta^{\mathrm{mean}}$ & Monthly intercept, upper bound and mean of the bounded credit \\
+$a_m$, $\overline\delta$ & Monthly intercept and upper bound of the bounded credit \\
 $p^{\mathrm{ch},\star}_t$ & Announced charging schedule \\
 \bottomrule
 \end{tabularx}
